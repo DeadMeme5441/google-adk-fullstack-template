@@ -1,63 +1,160 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 
 type Theme = 'light' | 'dark'
-
-interface ThemeContextType {
+type ThemeProviderState = {
   theme: Theme
+  setTheme: (theme: Theme) => void
   toggleTheme: () => void
   isDark: boolean
+  isLoading: boolean
 }
 
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
+const initialState: ThemeProviderState = {
+  theme: 'light',
+  setTheme: () => null,
+  toggleTheme: () => null,
+  isDark: false,
+  isLoading: true,
+}
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>('light')
-  
-  // Initialize theme on mount
-  useEffect(() => {
-    // Check localStorage first, then system preference
-    const savedTheme = localStorage.getItem('theme') as Theme
-    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-    
-    const initialTheme = savedTheme || (systemPrefersDark ? 'dark' : 'light')
-    setTheme(initialTheme)
-    
-    // Apply theme to document
-    applyTheme(initialTheme)
-  }, [])
-  
-  const applyTheme = (newTheme: Theme) => {
-    if (newTheme === 'dark') {
-      document.documentElement.classList.add('dark')
-    } else {
-      document.documentElement.classList.remove('dark')
+const ThemeProviderContext = createContext<ThemeProviderState>(initialState)
+
+// Helper function to get system theme preference
+const getSystemTheme = (): Theme => {
+  if (typeof window === 'undefined') return 'light'
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+}
+
+// Helper function to get stored theme from localStorage
+const getStoredTheme = (): Theme | null => {
+  if (typeof window === 'undefined') return null
+  try {
+    const stored = localStorage.getItem('theme')
+    if (stored === 'light' || stored === 'dark') {
+      return stored
     }
-    localStorage.setItem('theme', newTheme)
+    return null
+  } catch {
+    return null
   }
+}
+
+// Helper function to apply theme to DOM immediately
+const applyThemeToDOM = (theme: Theme) => {
+  if (typeof window === 'undefined') return
   
+  const root = window.document.documentElement
+  
+  // Remove existing theme classes
+  root.classList.remove('light', 'dark')
+  
+  // Add new theme class
+  root.classList.add(theme)
+  
+  // Store in localStorage
+  try {
+    localStorage.setItem('theme', theme)
+  } catch {
+    // Ignore localStorage errors
+  }
+}
+
+// Initialize theme before React hydration to prevent flash
+const initializeTheme = (): Theme => {
+  if (typeof window === 'undefined') return 'light'
+  
+  // Priority: stored theme > system preference > default light
+  const stored = getStoredTheme()
+  const theme = stored ?? getSystemTheme()
+  
+  // Apply immediately to prevent flash
+  applyThemeToDOM(theme)
+  
+  return theme
+}
+
+export function ThemeProvider({ 
+  children, 
+  defaultTheme = 'light',
+  storageKey = 'theme',
+  ...props 
+}: {
+  children: ReactNode
+  defaultTheme?: Theme
+  storageKey?: string
+} & React.ComponentProps<'div'>) {
+  // Initialize with the correct theme immediately
+  const [theme, setThemeState] = useState<Theme>(() => {
+    if (typeof window !== 'undefined') {
+      return initializeTheme()
+    }
+    return defaultTheme
+  })
+  
+  const [isLoading, setIsLoading] = useState(true)
+
+  // Initialize theme on mount and listen for system changes
+  useEffect(() => {
+    const storedTheme = getStoredTheme()
+    const systemTheme = getSystemTheme()
+    const initialTheme = storedTheme ?? systemTheme
+    
+    // Set state and apply to DOM
+    setThemeState(initialTheme)
+    applyThemeToDOM(initialTheme)
+    setIsLoading(false)
+
+    // Listen for system theme changes
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+    const handleChange = (e: MediaQueryListEvent) => {
+      // Only update if no stored preference
+      if (!getStoredTheme()) {
+        const newTheme = e.matches ? 'dark' : 'light'
+        setThemeState(newTheme)
+        applyThemeToDOM(newTheme)
+      }
+    }
+
+    mediaQuery.addEventListener('change', handleChange)
+    
+    return () => mediaQuery.removeEventListener('change', handleChange)
+  }, [])
+
+  // Theme setter that updates both state and DOM immediately
+  const setTheme = (newTheme: Theme) => {
+    setThemeState(newTheme)
+    applyThemeToDOM(newTheme)
+  }
+
+  // Toggle function
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light'
     setTheme(newTheme)
-    applyTheme(newTheme)
   }
-  
+
+  const value = {
+    theme,
+    setTheme,
+    toggleTheme,
+    isDark: theme === 'dark',
+    isLoading,
+  }
+
   return (
-    <ThemeContext.Provider 
-      value={{ 
-        theme, 
-        toggleTheme, 
-        isDark: theme === 'dark' 
-      }}
-    >
+    <ThemeProviderContext.Provider {...props} value={value}>
       {children}
-    </ThemeContext.Provider>
+    </ThemeProviderContext.Provider>
   )
 }
 
-export function useTheme() {
-  const context = useContext(ThemeContext)
-  if (context === undefined) {
+export const useTheme = () => {
+  const context = useContext(ThemeProviderContext)
+
+  if (context === undefined)
     throw new Error('useTheme must be used within a ThemeProvider')
-  }
+
   return context
 }
+
+// Export helper for manual theme initialization (for SSR)
+export { initializeTheme, applyThemeToDOM }

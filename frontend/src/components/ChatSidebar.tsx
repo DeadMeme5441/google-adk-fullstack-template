@@ -5,7 +5,7 @@ import { Button } from './ui/button'
 import { Card, CardContent } from './ui/card'
 import { ScrollArea } from './ui/scroll-area'
 import { Separator } from './ui/separator'
-import { MessageCircle, Plus, Clock, Sparkles } from 'lucide-react'
+import { MessageCircle, Plus, Clock, Sparkles, Bot } from 'lucide-react'
 import { cn } from '../lib/utils'
 
 interface ChatSidebarProps {
@@ -18,7 +18,7 @@ export function ChatSidebar({ currentSessionId }: ChatSidebarProps) {
   
   // Fetch sessions list
   const { data: sessions, isLoading, error } = useListSessionsAppsAppNameUsersUserIdSessionsGet(
-    { appName: 'nbfc-analyst', userId: 'default-user' },
+    { appName: 'default', userId: 'default-user' },
     {
       refetchInterval: 30000, // Refresh every 30 seconds
     }
@@ -30,10 +30,10 @@ export function ChatSidebar({ currentSessionId }: ChatSidebarProps) {
     setIsCreating(true)
     try {
       const session = await createSessionMutation.mutateAsync({
-        appName: 'nbfc-analyst',
+        appName: 'default',
         userId: 'default-user',
         data: {
-          appName: 'nbfc-analyst',
+          appName: 'default',
           userId: 'default-user',
         }
       })
@@ -58,7 +58,7 @@ export function ChatSidebar({ currentSessionId }: ChatSidebarProps) {
     if (isToday) {
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     } else {
-      return date.toLocaleDateString()
+      return date.toLocaleDateString([], { month: 'short', day: 'numeric' })
     }
   }
 
@@ -66,32 +66,35 @@ export function ChatSidebar({ currentSessionId }: ChatSidebarProps) {
     if (session.events && session.events.length > 0) {
       const lastEvent = session.events[session.events.length - 1]
       if (lastEvent.content?.text) {
-        return lastEvent.content.text.substring(0, 80) + '...'
+        return lastEvent.content.text.substring(0, 60) + '...'
       }
     }
     return 'New conversation'
   }
 
   return (
-    <div className="h-full flex flex-col bg-gray-50 dark:bg-gray-900">
+    <div className="h-full flex flex-col theme-bg-secondary theme-border border-r">
       {/* Header */}
-      <div className="p-4 space-y-3">
-        <div className="flex items-center space-x-2 mb-4">
-          <div className="w-6 h-6 bg-blue-600 dark:bg-blue-500 rounded-lg flex items-center justify-center">
-            <MessageCircle className="w-3 h-3 text-white" />
+      <div className="p-4 theme-bg-primary theme-border border-b">
+        <div className="flex items-center space-x-3 mb-4">
+          <div className="w-8 h-8 theme-primary-button rounded-xl flex items-center justify-center shadow-sm">
+            <MessageCircle className="w-4 h-4 text-white" />
           </div>
-          <span className="font-semibold text-gray-900 dark:text-gray-50">Conversations</span>
+          <div>
+            <h2 className="font-semibold theme-text-primary text-sm">Conversations</h2>
+            <p className="text-xs theme-text-muted">Chat history</p>
+          </div>
         </div>
         
         <Button
           onClick={handleNewChat}
           disabled={isCreating}
           size="sm"
-          className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white"
+          className="w-full theme-primary-button transition-all duration-200 hover:scale-[1.02] disabled:hover:scale-100"
         >
           {isCreating ? (
             <>
-              <div className="animate-spin w-3 h-3 border-2 border-white/30 border-t-white rounded-full mr-2" />
+              <div className="animate-spin w-4 h-4 border-2 border-white/30 border-t-white rounded-full mr-2" />
               Creating...
             </>
           ) : (
@@ -103,28 +106,31 @@ export function ChatSidebar({ currentSessionId }: ChatSidebarProps) {
         </Button>
       </div>
 
-      <Separator className="mx-4 bg-gray-200 dark:bg-gray-700" />
-
       {/* Sessions List */}
-      <ScrollArea className="flex-1 px-2">
+      <ScrollArea className="flex-1 p-2">
         {isLoading ? (
-          <div className="flex items-center justify-center p-8 text-gray-600 dark:text-gray-400">
-            <div className="animate-spin w-4 h-4 border-2 border-blue-600/30 border-t-blue-600 rounded-full mr-2" />
-            Loading...
+          <div className="flex flex-col items-center justify-center p-8 theme-text-muted">
+            <div className="animate-spin w-6 h-6 border-2 border-blue-300 dark:border-blue-600 border-t-blue-600 dark:border-t-blue-400 rounded-full mb-3" />
+            <p className="text-sm font-medium">Loading conversations...</p>
           </div>
         ) : error ? (
           <div className="p-4 text-center">
-            <div className="text-red-600 dark:text-red-400 text-sm font-medium">Failed to load</div>
-            <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">Please try again</div>
+            <div className="w-12 h-12 theme-bg-secondary rounded-2xl flex items-center justify-center mx-auto mb-3">
+              <Sparkles className="w-6 h-6 text-red-500" />
+            </div>
+            <div className="text-red-600 dark:text-red-400 text-sm font-medium mb-1">Failed to load</div>
+            <div className="text-xs theme-text-muted">Please refresh and try again</div>
           </div>
         ) : !sessions || sessions.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-8 text-center">
-            <MessageCircle className="w-8 h-8 text-gray-400 dark:text-gray-500 mb-3" />
-            <p className="text-sm text-gray-600 dark:text-gray-400">No conversations yet</p>
-            <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">Start a new chat to begin</p>
+            <div className="w-16 h-16 theme-bg-secondary rounded-3xl flex items-center justify-center mx-auto mb-4 theme-shadow">
+              <MessageCircle className="w-8 h-8 theme-text-muted" />
+            </div>
+            <h3 className="text-sm font-medium theme-text-primary mb-2">No conversations yet</h3>
+            <p className="text-xs theme-text-muted leading-relaxed">Start a new chat to begin your AI conversation</p>
           </div>
         ) : (
-          <div className="py-2 space-y-2">
+          <div className="space-y-2">
             {sessions.map((session, index) => (
               <Link
                 key={session.id}
@@ -134,34 +140,46 @@ export function ChatSidebar({ currentSessionId }: ChatSidebarProps) {
               >
                 <Card 
                   className={cn(
-                    "group cursor-pointer transition-all duration-200 hover:shadow-sm border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-blue-300 dark:hover:border-blue-600",
-                    session.id === currentSessionId && "ring-2 ring-blue-500/20 bg-blue-50 dark:bg-blue-950/20 border-blue-300 dark:border-blue-600"
+                    "group cursor-pointer transition-all duration-200 hover:shadow-md theme-border border theme-hover-bg theme-shadow-sm",
+                    session.id === currentSessionId 
+                      ? "ring-2 ring-blue-500/30 bg-blue-50 dark:bg-blue-950/30 border-blue-300 dark:border-blue-600 theme-shadow" 
+                      : "theme-card hover:border-blue-300 dark:hover:border-blue-600"
                   )}
                 >
-                  <CardContent className="p-3">
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center space-x-2 min-w-0 flex-1">
-                        <MessageCircle className={cn(
-                          "w-3 h-3 flex-shrink-0",
-                          session.id === currentSessionId ? "text-blue-600 dark:text-blue-500" : "text-gray-500 dark:text-gray-400"
-                        )} />
-                        <h4 className={cn(
-                          "font-medium text-xs truncate",
-                          session.id === currentSessionId ? "text-blue-900 dark:text-blue-50" : "text-gray-900 dark:text-gray-50"
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center space-x-3 min-w-0 flex-1">
+                        <div className={cn(
+                          "w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors",
+                          session.id === currentSessionId 
+                            ? "bg-blue-500 text-white" 
+                            : "theme-bg-secondary theme-text-muted group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30"
                         )}>
-                          Chat {session.id.substring(0, 8)}
-                        </h4>
+                          <Bot className="w-3 h-3" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h4 className={cn(
+                            "font-medium text-sm truncate transition-colors",
+                            session.id === currentSessionId 
+                              ? "text-blue-900 dark:text-blue-100" 
+                              : "theme-text-primary group-hover:theme-primary-text"
+                          )}>
+                            Chat #{session.id.substring(0, 8)}
+                          </h4>
+                        </div>
                       </div>
-                      <div className="flex items-center space-x-1 text-gray-500 dark:text-gray-400">
-                        <Clock className="w-2.5 h-2.5" />
-                        <span className="text-[10px] flex-shrink-0">
+                      <div className="flex items-center space-x-1 theme-text-muted flex-shrink-0">
+                        <Clock className="w-3 h-3" />
+                        <span className="text-xs">
                           {formatDate(session.lastUpdateTime)}
                         </span>
                       </div>
                     </div>
                     <p className={cn(
-                      "text-[11px] line-clamp-2 leading-relaxed",
-                      session.id === currentSessionId ? "text-blue-700 dark:text-blue-300" : "text-gray-600 dark:text-gray-400"
+                      "text-xs line-clamp-2 leading-relaxed transition-colors",
+                      session.id === currentSessionId 
+                        ? "text-blue-700 dark:text-blue-300" 
+                        : "theme-text-secondary group-hover:theme-text-primary"
                     )}>
                       {getSessionPreview(session)}
                     </p>
@@ -173,12 +191,11 @@ export function ChatSidebar({ currentSessionId }: ChatSidebarProps) {
         )}
       </ScrollArea>
 
-      <Separator className="mx-4 bg-gray-200 dark:bg-gray-700" />
-
       {/* Footer */}
-      <div className="p-4">
-        <div className="text-[10px] text-gray-500 dark:text-gray-400 text-center">
-          AI Agent
+      <div className="p-4 theme-bg-primary theme-border border-t">
+        <div className="flex items-center justify-center space-x-2 theme-text-muted">
+          <Sparkles className="w-4 h-4 theme-primary-text" />
+          <span className="text-xs font-medium">AI Assistant</span>
         </div>
       </div>
     </div>

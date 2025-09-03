@@ -3,7 +3,6 @@ import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanstackDevtools } from '@tanstack/react-devtools'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
-import { useEffect } from 'react'
 
 import Header from '../components/Header'
 import { AuthProvider } from '../lib/auth'
@@ -53,17 +52,47 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <script
           dangerouslySetInnerHTML={{
             __html: `
-              try {
-                const theme = localStorage.getItem('theme');
-                if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                  document.documentElement.classList.add('dark');
+              // Initialize theme immediately to prevent flash of wrong theme
+              (function() {
+                try {
+                  // Get stored theme from localStorage
+                  const storedTheme = localStorage.getItem('theme');
+                  
+                  // Get system preference
+                  const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                  
+                  // Determine theme: stored > system > light default
+                  let theme = 'light';
+                  if (storedTheme === 'dark' || storedTheme === 'light') {
+                    theme = storedTheme;
+                  } else if (systemPrefersDark) {
+                    theme = 'dark';
+                  }
+                  
+                  // Apply theme class to html element immediately
+                  if (theme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                    document.documentElement.classList.remove('light');
+                  } else {
+                    document.documentElement.classList.add('light');
+                    document.documentElement.classList.remove('dark');
+                  }
+                  
+                  // Set color-scheme for better browser defaults
+                  document.documentElement.style.colorScheme = theme;
+                  
+                } catch (e) {
+                  // Fallback to light theme on any error
+                  document.documentElement.classList.add('light');
+                  document.documentElement.classList.remove('dark');
+                  document.documentElement.style.colorScheme = 'light';
                 }
-              } catch {}
+              })();
             `,
           }}
         />
       </head>
-      <body className="h-full bg-white dark:bg-gray-900">
+      <body className="h-full theme-bg-primary theme-text-primary antialiased">
         <QueryClientProvider client={queryClient}>
           <ThemeProvider>
             <AuthProvider>
@@ -75,18 +104,24 @@ function RootDocument({ children }: { children: React.ReactNode }) {
               </div>
             </AuthProvider>
           </ThemeProvider>
-          <ReactQueryDevtools initialIsOpen={false} />
-          <TanstackDevtools
-            config={{
-              position: 'bottom-left',
-            }}
-            plugins={[
-              {
-                name: 'Tanstack Router',
-                render: <TanStackRouterDevtoolsPanel />,
-              },
-            ]}
-          />
+          
+          {/* Development tools - only in development */}
+          {process.env.NODE_ENV === 'development' && (
+            <>
+              <ReactQueryDevtools initialIsOpen={false} />
+              <TanstackDevtools
+                config={{
+                  position: 'bottom-left',
+                }}
+                plugins={[
+                  {
+                    name: 'Tanstack Router',
+                    render: <TanStackRouterDevtoolsPanel />,
+                  },
+                ]}
+              />
+            </>
+          )}
         </QueryClientProvider>
         <Scripts />
       </body>

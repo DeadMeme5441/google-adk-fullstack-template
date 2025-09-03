@@ -1,107 +1,140 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Button } from './ui/button'
 import { Textarea } from './ui/textarea'
-import { Send, Loader2 } from 'lucide-react'
+import { Send, Paperclip } from 'lucide-react'
+import { FileUploadButton } from './FileUploadButton'
 import { cn } from '../lib/utils'
-import { ChatFileUploadButton } from './FileUploadButton'
 
 interface ChatInputProps {
   onSendMessage: (message: string) => void
-  sessionId?: string
+  sessionId: string
   disabled?: boolean
   placeholder?: string
+  className?: string
 }
 
-export function ChatInput({ onSendMessage, sessionId, disabled = false, placeholder = "Type your message..." }: ChatInputProps) {
+export function ChatInput({ 
+  onSendMessage, 
+  sessionId, 
+  disabled = false, 
+  placeholder = "Type your message...",
+  className 
+}: ChatInputProps) {
   const [message, setMessage] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto'
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 200)}px`
+    }
+  }, [message])
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!message.trim() || disabled) return
-    
-    onSendMessage(message.trim())
-    setMessage('')
-    
-    // Reset textarea height
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto'
+    if (message.trim() && !disabled) {
+      onSendMessage(message.trim())
+      setMessage('')
     }
   }
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
-      handleSubmit(e as any)
+      handleSubmit(e)
     }
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setMessage(e.target.value)
-    
-    // Auto-resize textarea
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto'
-      textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px'
-    }
+  const handleFileUploadSuccess = () => {
+    // File uploaded successfully - FileSidebar will update automatically
   }
+
+  const isMessageValid = message.trim().length > 0
 
   return (
-    <div className="p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
-      <form onSubmit={handleSubmit} className="flex items-end space-x-3 max-w-4xl mx-auto">
-        {/* Upload button - only show when we have a sessionId */}
-        {sessionId && (
-          <ChatFileUploadButton 
-            sessionId={sessionId}
-            className="mb-1" 
-          />
-        )}
-        <div className="flex-1 relative">
-          <Textarea
-            ref={textareaRef}
-            value={message}
-            onChange={handleChange}
-            onKeyDown={handleKeyPress}
-            placeholder={placeholder}
-            disabled={disabled}
-            className={cn(
-              "min-h-[52px] max-h-32 resize-none border border-gray-200 dark:border-gray-600 shadow-sm",
-              "bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-50",
-              "focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 dark:focus:border-blue-400",
-              "rounded-xl px-4 py-3",
-              "placeholder:text-gray-500 dark:placeholder:text-gray-400",
-              "transition-all duration-200",
-              "hover:shadow-md hover:bg-white dark:hover:bg-gray-600",
-              disabled && "opacity-50 cursor-not-allowed"
-            )}
-            rows={1}
-          />
+    <div className={cn("w-full max-w-4xl mx-auto", className)}>
+      <form onSubmit={handleSubmit} className="relative">
+        <div className="relative flex items-end space-x-3 theme-card theme-border border rounded-2xl p-4 theme-shadow focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500/50 transition-all duration-200">
+          
+          {/* File Upload Button */}
+          <div className="flex-shrink-0 pb-1">
+            <FileUploadButton
+              sessionId={sessionId}
+              onUploadSuccess={handleFileUploadSuccess}
+              disabled={disabled}
+              className="h-10 w-10 p-0 theme-hover-bg-subtle rounded-lg flex items-center justify-center border-0 shadow-none transition-colors duration-200"
+            >
+              <Paperclip className="w-4 h-4 theme-text-muted group-hover:theme-text-primary transition-colors" />
+            </FileUploadButton>
+          </div>
+
+          {/* Message Input */}
+          <div className="flex-1 min-w-0">
+            <Textarea
+              ref={textareaRef}
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder={placeholder}
+              disabled={disabled}
+              className={cn(
+                "min-h-[44px] max-h-48 resize-none border-0 shadow-none bg-transparent",
+                "theme-text-primary placeholder:theme-text-muted",
+                "focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0",
+                "text-base leading-relaxed py-2 px-0",
+                "scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600"
+              )}
+              style={{ 
+                minHeight: '44px',
+                lineHeight: '1.5'
+              }}
+            />
+          </div>
+
+          {/* Send Button */}
+          <div className="flex-shrink-0 pb-1">
+            <Button
+              type="submit"
+              disabled={!isMessageValid || disabled}
+              size="icon"
+              className={cn(
+                "h-10 w-10 rounded-lg transition-all duration-200",
+                isMessageValid && !disabled
+                  ? "theme-primary-button shadow-sm hover:shadow-md hover:scale-105 transform"
+                  : "theme-bg-secondary theme-border border theme-text-muted cursor-not-allowed opacity-50"
+              )}
+            >
+              {disabled ? (
+                <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Send className={cn(
+                  "w-4 h-4 transition-transform duration-200",
+                  isMessageValid && !disabled ? "text-white" : ""
+                )} />
+              )}
+            </Button>
+          </div>
         </div>
-        
-        <Button
-          type="submit"
-          disabled={!message.trim() || disabled}
-          size="icon"
-          className={cn(
-            "h-[52px] w-[52px] rounded-xl flex-shrink-0",
-            "bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600",
-            "shadow-sm hover:shadow-md",
-            "transition-all duration-200",
-            "disabled:opacity-50 disabled:cursor-not-allowed",
-            "text-white"
+
+        {/* Helper Text */}
+        <div className="flex items-center justify-between mt-3 px-1">
+          <div className="flex items-center space-x-4 text-xs theme-text-muted">
+            <span className="flex items-center space-x-2">
+              <kbd className="px-2 py-1 theme-bg-secondary theme-border border rounded text-xs font-mono">Enter</kbd>
+              <span>to send</span>
+            </span>
+            <span className="flex items-center space-x-2">
+              <kbd className="px-2 py-1 theme-bg-secondary theme-border border rounded text-xs font-mono">Shift+Enter</kbd>
+              <span>for new line</span>
+            </span>
+          </div>
+          {message.length > 0 && (
+            <div className="text-xs theme-text-muted">
+              {message.length} character{message.length !== 1 ? 's' : ''}
+            </div>
           )}
-        >
-          {disabled ? (
-            <Loader2 className="h-5 w-5 animate-spin" />
-          ) : (
-            <Send className="h-5 w-5" />
-          )}
-        </Button>
+        </div>
       </form>
-      
-      <div className="mt-3 text-xs text-gray-500 dark:text-gray-400 text-center max-w-4xl mx-auto">
-        Press <kbd className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded text-xs">Enter</kbd> to send, <kbd className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded text-xs">Shift+Enter</kbd> for new line
-      </div>
     </div>
   )
 }
