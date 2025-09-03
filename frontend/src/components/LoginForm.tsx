@@ -44,7 +44,7 @@ export function LoginForm() {
         <div className="p-6">
           {/* Simple, clean header */}
           <div className="text-center mb-6">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-50">
               Sign In
             </h1>
             <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
@@ -55,11 +55,11 @@ export function LoginForm() {
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Email/username input with icon */}
             <div className="space-y-1">
-              <label htmlFor="email_or_username" className="text-sm font-medium text-foreground">
+              <label htmlFor="email_or_username" className="text-sm font-medium text-gray-900 dark:text-gray-50">
                 Email or Username
               </label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 dark:text-gray-400" />
                 <Input
                   id="email_or_username"
                   name="email_or_username"
@@ -68,18 +68,18 @@ export function LoginForm() {
                   onChange={handleChange}
                   placeholder="Enter your email or username"
                   required
-                  className="pl-10 h-11"
+                  className="pl-10 h-11 bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-50 placeholder-gray-500 dark:placeholder-gray-400"
                 />
               </div>
             </div>
 
             {/* Password input with visibility toggle */}
             <div className="space-y-1">
-              <label htmlFor="password" className="text-sm font-medium text-foreground">
+              <label htmlFor="password" className="text-sm font-medium text-gray-900 dark:text-gray-50">
                 Password
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 dark:text-gray-400" />
                 <Input
                   id="password"
                   name="password"
@@ -88,12 +88,12 @@ export function LoginForm() {
                   onChange={handleChange}
                   placeholder="Enter your password"
                   required
-                  className="pl-10 pr-10 h-11"
+                  className="pl-10 pr-10 h-11 bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-50 placeholder-gray-500 dark:placeholder-gray-400"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-50 transition-colors"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -102,8 +102,8 @@ export function LoginForm() {
 
             {/* Error message */}
             {error && (
-              <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-md">
-                <p className="text-sm text-destructive">{error}</p>
+              <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
+                <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
               </div>
             )}
 
@@ -111,7 +111,7 @@ export function LoginForm() {
             <Button 
               type="submit" 
               disabled={isLoading}
-              className="w-full h-11 font-medium"
+              className="w-full h-11 font-medium bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white"
             >
               {isLoading ? (
                 <>
@@ -125,12 +125,12 @@ export function LoginForm() {
           </form>
 
           {/* Footer */}
-          <div className="text-center mt-6 pt-4 border-t border-border">
-            <p className="text-sm text-muted-foreground">
+          <div className="text-center mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <p className="text-sm text-gray-600 dark:text-gray-300">
               Don't have an account?{' '}
               <Link 
                 to="/register" 
-                className="font-medium text-primary hover:underline"
+                className="font-medium text-blue-600 dark:text-blue-500 hover:underline"
               >
                 Sign up
               </Link>

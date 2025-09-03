@@ -110,7 +110,7 @@ export function ChatInterface({ sessionId, onToggleFileSidebar, isFileSidebarOpe
               <Bot className="w-4 h-4 text-white" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">
                 AI Assistant
               </h2>
               <p className="text-xs text-gray-600 dark:text-gray-400">Always here to help</p>
@@ -125,7 +125,7 @@ export function ChatInterface({ sessionId, onToggleFileSidebar, isFileSidebarOpe
               size="sm"
               className="h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-gray-700"
             >
-              <Files className={`h-4 w-4 transition-colors ${isFileSidebarOpen ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500'}`} />
+              <Files className={`h-4 w-4 transition-colors ${isFileSidebarOpen ? 'text-blue-600 dark:text-blue-500' : 'text-gray-500 dark:text-gray-400'}`} />
             </Button>
           )}
         </div>
@@ -136,11 +136,11 @@ export function ChatInterface({ sessionId, onToggleFileSidebar, isFileSidebarOpe
         {messages.length === 0 ? (
           <div className="flex-1 flex items-center justify-center min-h-[400px]">
             <div className="text-center space-y-4 max-w-md">
-              <div className="w-16 h-16 bg-blue-50 dark:bg-blue-950 rounded-2xl flex items-center justify-center mx-auto">
-                <Sparkles className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+              <div className="w-16 h-16 bg-blue-50 dark:bg-blue-900/20 rounded-2xl flex items-center justify-center mx-auto">
+                <Sparkles className="w-8 h-8 text-blue-600 dark:text-blue-500" />
               </div>
               <div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-50 mb-2">
                   Ready to chat!
                 </h3>
                 <p className="text-gray-600 dark:text-gray-400">

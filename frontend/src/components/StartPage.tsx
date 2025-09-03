@@ -122,7 +122,7 @@ export function StartPage() {
               <MessageCircle className="w-8 h-8 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+              <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-50 mb-4">
                 How can I help you today?
               </h1>
               <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
@@ -141,7 +141,7 @@ export function StartPage() {
                     onChange={(e) => setMessage(e.target.value)}
                     onKeyDown={handleKeyPress}
                     placeholder="Message your AI assistant..."
-                    className="min-h-[120px] text-base resize-none bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white border-gray-200 dark:border-gray-700 focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 placeholder:text-gray-500 dark:placeholder:text-gray-400"
+                    className="min-h-[120px] text-base resize-none bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-50 border-gray-200 dark:border-gray-700 focus:border-blue-500 dark:focus:border-blue-500 focus:ring-blue-500 dark:focus:ring-blue-500 placeholder:text-gray-500 dark:placeholder:text-gray-400"
                     disabled={isCreating}
                   />
                 </div>
@@ -194,10 +194,10 @@ export function StartPage() {
                     <CardContent className="p-4">
                       <div className="flex items-start space-x-3">
                         <div className="flex-shrink-0 w-8 h-8 bg-blue-50 dark:bg-blue-950 rounded-lg flex items-center justify-center">
-                          <Icon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                          <Icon className="w-4 h-4 text-blue-600 dark:text-blue-500" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-medium text-gray-900 dark:text-white text-sm mb-1">
+                          <h4 className="font-medium text-gray-900 dark:text-gray-50 text-sm mb-1">
                             {example.title}
                           </h4>
                           <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">

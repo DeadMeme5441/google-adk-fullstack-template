@@ -66,11 +66,11 @@ export function RegisterForm() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-900">
-      <Card className="w-full max-w-md shadow-lg bg-white dark:bg-gray-800">
+      <Card className="w-full max-w-md shadow-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
         <div className="p-6">
           {/* Simple, clean header */}
           <div className="text-center mb-6">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-50">
               Create Account
             </h1>
             <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
@@ -81,11 +81,11 @@ export function RegisterForm() {
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Email input with icon */}
             <div className="space-y-1">
-              <label htmlFor="email" className="text-sm font-medium text-gray-700 dark:text-gray-200">
+              <label htmlFor="email" className="text-sm font-medium text-gray-900 dark:text-gray-50">
                 Email
               </label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 dark:text-gray-400" />
                 <Input
                   id="email"
                   name="email"
@@ -94,18 +94,18 @@ export function RegisterForm() {
                   onChange={handleChange}
                   placeholder="Enter your email"
                   required
-                  className="pl-10 h-11 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
+                  className="pl-10 h-11 bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-50 placeholder-gray-500 dark:placeholder-gray-400"
                 />
               </div>
             </div>
 
             {/* Username input with icon */}
             <div className="space-y-1">
-              <label htmlFor="username" className="text-sm font-medium text-gray-700 dark:text-gray-200">
+              <label htmlFor="username" className="text-sm font-medium text-gray-900 dark:text-gray-50">
                 Username
               </label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 dark:text-gray-400" />
                 <Input
                   id="username"
                   name="username"
@@ -116,18 +116,18 @@ export function RegisterForm() {
                   required
                   minLength={3}
                   maxLength={50}
-                  className="pl-10 h-11 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
+                  className="pl-10 h-11 bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-50 placeholder-gray-500 dark:placeholder-gray-400"
                 />
               </div>
             </div>
 
             {/* Password input with visibility toggle */}
             <div className="space-y-1">
-              <label htmlFor="password" className="text-sm font-medium text-gray-700 dark:text-gray-200">
+              <label htmlFor="password" className="text-sm font-medium text-gray-900 dark:text-gray-50">
                 Password
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 dark:text-gray-400" />
                 <Input
                   id="password"
                   name="password"
@@ -137,12 +137,12 @@ export function RegisterForm() {
                   placeholder="Enter your password"
                   required
                   minLength={6}
-                  className="pl-10 pr-10 h-11 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
+                  className="pl-10 pr-10 h-11 bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-50 placeholder-gray-500 dark:placeholder-gray-400"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-50 transition-colors"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -151,11 +151,11 @@ export function RegisterForm() {
 
             {/* Confirm password input with visibility toggle */}
             <div className="space-y-1">
-              <label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700 dark:text-gray-200">
+              <label htmlFor="confirmPassword" className="text-sm font-medium text-gray-900 dark:text-gray-50">
                 Confirm Password
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 dark:text-gray-400" />
                 <Input
                   id="confirmPassword"
                   name="confirmPassword"
@@ -164,12 +164,12 @@ export function RegisterForm() {
                   onChange={handleChange}
                   placeholder="Confirm your password"
                   required
-                  className="pl-10 pr-10 h-11 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
+                  className="pl-10 pr-10 h-11 bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-50 placeholder-gray-500 dark:placeholder-gray-400"
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-50 transition-colors"
                 >
                   {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -178,7 +178,7 @@ export function RegisterForm() {
 
             {/* Error message */}
             {error && (
-              <div className="p-3 bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 rounded-md">
+              <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
                 <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
               </div>
             )}
@@ -187,7 +187,7 @@ export function RegisterForm() {
             <Button 
               type="submit" 
               disabled={isLoading}
-              className="w-full h-11 font-medium bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-600 dark:text-white dark:hover:bg-blue-700"
+              className="w-full h-11 font-medium bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white"
             >
               {isLoading ? (
                 <>
@@ -201,12 +201,12 @@ export function RegisterForm() {
           </form>
 
           {/* Footer */}
-          <div className="text-center mt-6 pt-4 border-t">
+          <div className="text-center mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
             <p className="text-sm text-gray-600 dark:text-gray-300">
               Already have an account?{' '}
               <Link 
                 to="/login" 
-                className="font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                className="font-medium text-blue-600 dark:text-blue-500 hover:underline"
               >
                 Sign in
               </Link>

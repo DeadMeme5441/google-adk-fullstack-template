@@ -7,6 +7,7 @@ import { useEffect } from 'react'
 
 import Header from '../components/Header'
 import { AuthProvider } from '../lib/auth'
+import { ThemeProvider } from '../hooks/useTheme'
 
 import appCss from '../styles.css?url'
 
@@ -62,16 +63,18 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           }}
         />
       </head>
-      <body className="h-full bg-gray-50 dark:bg-gray-900">
+      <body className="h-full bg-white dark:bg-gray-900">
         <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            <div className="h-full flex flex-col">
-              <Header />
-              <main className="flex-1 min-h-0">
-                {children}
-              </main>
-            </div>
-          </AuthProvider>
+          <ThemeProvider>
+            <AuthProvider>
+              <div className="h-full flex flex-col">
+                <Header />
+                <main className="flex-1 min-h-0">
+                  {children}
+                </main>
+              </div>
+            </AuthProvider>
+          </ThemeProvider>
           <ReactQueryDevtools initialIsOpen={false} />
           <TanstackDevtools
             config={{

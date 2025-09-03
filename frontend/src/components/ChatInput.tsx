@@ -66,7 +66,7 @@ export function ChatInput({ onSendMessage, sessionId, disabled = false, placehol
             disabled={disabled}
             className={cn(
               "min-h-[52px] max-h-32 resize-none border border-gray-200 dark:border-gray-600 shadow-sm",
-              "bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white",
+              "bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-50",
               "focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 dark:focus:border-blue-400",
               "rounded-xl px-4 py-3",
               "placeholder:text-gray-500 dark:placeholder:text-gray-400",
@@ -84,7 +84,7 @@ export function ChatInput({ onSendMessage, sessionId, disabled = false, placehol
           size="icon"
           className={cn(
             "h-[52px] w-[52px] rounded-xl flex-shrink-0",
-            "bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500",
+            "bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600",
             "shadow-sm hover:shadow-md",
             "transition-all duration-200",
             "disabled:opacity-50 disabled:cursor-not-allowed",

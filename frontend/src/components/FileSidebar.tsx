@@ -73,7 +73,7 @@ const FileItem = ({
         <div className="flex items-center space-x-2 min-w-0 flex-1">
           {getFileIcon(file.mime_type)}
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium text-gray-900 dark:text-white truncate" title={file.filename}>
+            <p className="text-sm font-medium text-gray-900 dark:text-gray-50 truncate" title={file.filename}>
               {file.filename}
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -140,13 +140,13 @@ const VersionHistoryModal = ({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <Card className="w-96 max-h-96 p-4 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Version History</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-50">Version History</h3>
           <Button size="sm" variant="ghost" onClick={onClose} className="h-8 w-8 p-0">
             <X className="h-4 w-4" />
           </Button>
         </div>
         <div className="mb-3">
-          <p className="font-medium text-gray-900 dark:text-white">{file.filename}</p>
+          <p className="font-medium text-gray-900 dark:text-gray-50">{file.filename}</p>
           <p className="text-sm text-gray-500 dark:text-gray-400">{formatFileSize(file.size)}</p>
         </div>
         <ScrollArea className="max-h-48">
@@ -157,7 +157,7 @@ const VersionHistoryModal = ({
                 className="flex items-center justify-between p-2 rounded border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
               >
                 <div className="flex items-center space-x-2">
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">Version {version}</span>
+                  <span className="text-sm font-medium text-gray-900 dark:text-gray-50">Version {version}</span>
                   {version === file.latest_version && (
                     <span className="text-xs px-2 py-1 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded-full">
                       Latest
@@ -299,7 +299,7 @@ export function FileSidebar({ sessionId, isOpen, onToggle, className }: FileSide
             {/* Header */}
             <div className="p-4 border-b border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800">
               <div className="flex items-center justify-between mb-3">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50 flex items-center">
                   <Files className="h-5 w-5 mr-2" />
                   Files
                 </h2>
@@ -326,7 +326,7 @@ export function FileSidebar({ sessionId, isOpen, onToggle, className }: FileSide
                   className="hidden"
                 />
                 <Upload className="h-8 w-8 mx-auto mb-2 text-gray-400 dark:text-gray-500" />
-                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-50">
                   {isDragging ? 'Drop files here' : 'Upload files'}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -340,7 +340,7 @@ export function FileSidebar({ sessionId, isOpen, onToggle, className }: FileSide
               <div className="p-4 space-y-3">
                 {isLoading ? (
                   <div className="text-center py-8">
-                    <Loader2 className="h-8 w-8 mx-auto text-blue-600 dark:text-blue-400 mb-3 animate-spin" />
+                    <Loader2 className="h-8 w-8 mx-auto text-blue-600 dark:text-blue-500 mb-3 animate-spin" />
                     <p className="text-sm text-gray-500 dark:text-gray-400">Loading files...</p>
                   </div>
                 ) : files.length > 0 ? (
@@ -366,7 +366,7 @@ export function FileSidebar({ sessionId, isOpen, onToggle, className }: FileSide
                 {/* Upload status */}
                 {isUploading && (
                   <div className="text-center py-4 border-t border-gray-200 dark:border-gray-600">
-                    <Loader2 className="h-6 w-6 mx-auto text-blue-600 dark:text-blue-400 mb-2 animate-spin" />
+                    <Loader2 className="h-6 w-6 mx-auto text-blue-600 dark:text-blue-500 mb-2 animate-spin" />
                     <p className="text-sm text-gray-600 dark:text-gray-400">Uploading files...</p>
                   </div>
                 )}

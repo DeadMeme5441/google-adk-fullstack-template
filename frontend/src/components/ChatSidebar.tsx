@@ -80,14 +80,14 @@ export function ChatSidebar({ currentSessionId }: ChatSidebarProps) {
           <div className="w-6 h-6 bg-blue-600 dark:bg-blue-500 rounded-lg flex items-center justify-center">
             <MessageCircle className="w-3 h-3 text-white" />
           </div>
-          <span className="font-semibold text-gray-900 dark:text-white">Conversations</span>
+          <span className="font-semibold text-gray-900 dark:text-gray-50">Conversations</span>
         </div>
         
         <Button
           onClick={handleNewChat}
           disabled={isCreating}
           size="sm"
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+          className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white"
         >
           {isCreating ? (
             <>
@@ -143,11 +143,11 @@ export function ChatSidebar({ currentSessionId }: ChatSidebarProps) {
                       <div className="flex items-center space-x-2 min-w-0 flex-1">
                         <MessageCircle className={cn(
                           "w-3 h-3 flex-shrink-0",
-                          session.id === currentSessionId ? "text-blue-600 dark:text-blue-400" : "text-gray-500 dark:text-gray-400"
+                          session.id === currentSessionId ? "text-blue-600 dark:text-blue-500" : "text-gray-500 dark:text-gray-400"
                         )} />
                         <h4 className={cn(
                           "font-medium text-xs truncate",
-                          session.id === currentSessionId ? "text-blue-900 dark:text-blue-100" : "text-gray-900 dark:text-gray-100"
+                          session.id === currentSessionId ? "text-blue-900 dark:text-blue-50" : "text-gray-900 dark:text-gray-50"
                         )}>
                           Chat {session.id.substring(0, 8)}
                         </h4>

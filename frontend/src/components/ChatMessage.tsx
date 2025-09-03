@@ -85,12 +85,12 @@ export function ChatMessage({ event, isLoading = false }: ChatMessageProps) {
                     <div className="w-2 h-2 bg-blue-600 dark:bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
                   </div>
                   <div className="flex items-center space-x-1">
-                    <Sparkles className="w-3 h-3 text-blue-600 dark:text-blue-400 animate-pulse" />
+                    <Sparkles className="w-3 h-3 text-blue-600 dark:text-blue-500 animate-pulse" />
                     <span className="text-gray-600 dark:text-gray-400 text-sm">Thinking...</span>
                   </div>
                 </div>
               ) : (
-                <div className="whitespace-pre-wrap text-sm leading-relaxed text-gray-900 dark:text-white">
+                <div className="whitespace-pre-wrap text-sm leading-relaxed text-gray-900 dark:text-gray-50">
                   {messageText}
                 </div>
               )}
