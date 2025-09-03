@@ -12,8 +12,8 @@ export function AuthGuard({ children, fallback }: AuthGuardProps) {
   // Show loading while checking auth state
   if (isLoading) {
     return (
-      <div className="min-h-full flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="min-h-full flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-500"></div>
       </div>
     )
   }

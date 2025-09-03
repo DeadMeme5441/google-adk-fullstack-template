@@ -68,15 +68,15 @@ const FileItem = ({
   onShowVersions: (file: FileMetadata) => void
 }) => {
   return (
-    <div className="group p-3 rounded-lg border bg-white hover:bg-gray-50 transition-colors">
+    <div className="group p-3 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center space-x-2 min-w-0 flex-1">
           {getFileIcon(file.mime_type)}
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium text-gray-900 truncate" title={file.filename}>
+            <p className="text-sm font-medium text-gray-900 dark:text-white truncate" title={file.filename}>
               {file.filename}
             </p>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
               {formatFileSize(file.size)} • {file.version_count} version{file.version_count !== 1 ? 's' : ''}
             </p>
           </div>
@@ -106,7 +106,7 @@ const FileItem = ({
             size="sm"
             variant="ghost"
             onClick={() => onDelete(file.artifact_name)}
-            className="h-7 w-7 p-0 text-red-600 hover:text-red-700"
+            className="h-7 w-7 p-0 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
             title="Delete"
           >
             <Trash2 className="h-3 w-3" />
@@ -115,7 +115,7 @@ const FileItem = ({
       </div>
       {file.namespace === 'user' && (
         <div className="flex items-center justify-between">
-          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-purple-100 text-purple-700">
+          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">
             User file
           </span>
         </div>
@@ -138,28 +138,28 @@ const VersionHistoryModal = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <Card className="w-96 max-h-96 p-4">
+      <Card className="w-96 max-h-96 p-4 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold">Version History</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Version History</h3>
           <Button size="sm" variant="ghost" onClick={onClose} className="h-8 w-8 p-0">
             <X className="h-4 w-4" />
           </Button>
         </div>
         <div className="mb-3">
-          <p className="font-medium text-gray-900">{file.filename}</p>
-          <p className="text-sm text-gray-500">{formatFileSize(file.size)}</p>
+          <p className="font-medium text-gray-900 dark:text-white">{file.filename}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{formatFileSize(file.size)}</p>
         </div>
         <ScrollArea className="max-h-48">
           <div className="space-y-2">
             {file.versions.map((version) => (
               <div 
                 key={version} 
-                className="flex items-center justify-between p-2 rounded border hover:bg-gray-50"
+                className="flex items-center justify-between p-2 rounded border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
               >
                 <div className="flex items-center space-x-2">
-                  <span className="text-sm font-medium">Version {version}</span>
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">Version {version}</span>
                   {version === file.latest_version && (
-                    <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full">
+                    <span className="text-xs px-2 py-1 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded-full">
                       Latest
                     </span>
                   )}
@@ -279,7 +279,7 @@ export function FileSidebar({ sessionId, isOpen, onToggle, className }: FileSide
             onClick={onToggle}
             variant="ghost"
             size="icon"
-            className="h-12 w-12 rounded-none border-l border-y hover:bg-gray-100"
+            className="h-12 w-12 rounded-none border-l border-y border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
             title={isOpen ? "Hide files" : "Show files"}
           >
             {isOpen ? (
@@ -295,11 +295,11 @@ export function FileSidebar({ sessionId, isOpen, onToggle, className }: FileSide
 
         {/* Sidebar Content */}
         {isOpen && (
-          <div className="flex-1 bg-gray-50 border-l border-y flex flex-col">
+          <div className="flex-1 bg-gray-50 dark:bg-gray-900 border-l border-y border-gray-200 dark:border-gray-600 flex flex-col">
             {/* Header */}
-            <div className="p-4 border-b bg-white">
+            <div className="p-4 border-b border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800">
               <div className="flex items-center justify-between mb-3">
-                <h2 className="text-lg font-semibold text-gray-900 flex items-center">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
                   <Files className="h-5 w-5 mr-2" />
                   Files
                 </h2>
@@ -313,8 +313,8 @@ export function FileSidebar({ sessionId, isOpen, onToggle, className }: FileSide
                 className={cn(
                   "relative border-2 border-dashed rounded-lg p-4 text-center transition-colors cursor-pointer",
                   isDragging 
-                    ? "border-purple-500 bg-purple-50" 
-                    : "border-gray-300 hover:border-gray-400 hover:bg-gray-50"
+                    ? "border-blue-500 bg-blue-50 dark:bg-blue-950" 
+                    : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700"
                 )}
                 onClick={handleFileSelect}
               >
@@ -325,11 +325,11 @@ export function FileSidebar({ sessionId, isOpen, onToggle, className }: FileSide
                   onChange={handleFileChange}
                   className="hidden"
                 />
-                <Upload className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                <p className="text-sm font-medium text-gray-900">
+                <Upload className="h-8 w-8 mx-auto mb-2 text-gray-400 dark:text-gray-500" />
+                <p className="text-sm font-medium text-gray-900 dark:text-white">
                   {isDragging ? 'Drop files here' : 'Upload files'}
                 </p>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   Drag & drop or click to browse
                 </p>
               </div>
@@ -338,10 +338,10 @@ export function FileSidebar({ sessionId, isOpen, onToggle, className }: FileSide
             {/* File List */}
             <ScrollArea className="flex-1">
               <div className="p-4 space-y-3">
-{isLoading ? (
+                {isLoading ? (
                   <div className="text-center py-8">
-                    <Loader2 className="h-8 w-8 mx-auto text-purple-600 mb-3 animate-spin" />
-                    <p className="text-sm text-gray-500">Loading files...</p>
+                    <Loader2 className="h-8 w-8 mx-auto text-blue-600 dark:text-blue-400 mb-3 animate-spin" />
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Loading files...</p>
                   </div>
                 ) : files.length > 0 ? (
                   files.map((file) => (
@@ -355,9 +355,9 @@ export function FileSidebar({ sessionId, isOpen, onToggle, className }: FileSide
                   ))
                 ) : (
                   <div className="text-center py-8">
-                    <Files className="h-12 w-12 mx-auto text-gray-300 mb-3" />
-                    <p className="text-sm text-gray-500">No files uploaded yet</p>
-                    <p className="text-xs text-gray-400 mt-1">
+                    <Files className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-600 mb-3" />
+                    <p className="text-sm text-gray-500 dark:text-gray-400">No files uploaded yet</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                       Upload files to get started
                     </p>
                   </div>
@@ -365,9 +365,9 @@ export function FileSidebar({ sessionId, isOpen, onToggle, className }: FileSide
                 
                 {/* Upload status */}
                 {isUploading && (
-                  <div className="text-center py-4 border-t">
-                    <Loader2 className="h-6 w-6 mx-auto text-purple-600 mb-2 animate-spin" />
-                    <p className="text-sm text-gray-600">Uploading files...</p>
+                  <div className="text-center py-4 border-t border-gray-200 dark:border-gray-600">
+                    <Loader2 className="h-6 w-6 mx-auto text-blue-600 dark:text-blue-400 mb-2 animate-spin" />
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Uploading files...</p>
                   </div>
                 )}
               </div>

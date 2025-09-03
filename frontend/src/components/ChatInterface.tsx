@@ -75,9 +75,9 @@ export function ChatInterface({ sessionId, onToggleFileSidebar, isFileSidebarOpe
 
   if (sessionLoading) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-slate-50">
-        <div className="flex items-center space-x-3 text-muted-foreground">
-          <div className="animate-spin w-5 h-5 border-2 border-purple-600/30 border-t-purple-600 rounded-full" />
+      <div className="flex-1 flex items-center justify-center bg-white dark:bg-gray-800">
+        <div className="flex items-center space-x-3 text-gray-600 dark:text-gray-400">
+          <div className="animate-spin w-5 h-5 border-2 border-blue-600/30 border-t-blue-600 dark:border-blue-500/30 dark:border-t-blue-500 rounded-full" />
           <span>Loading conversation...</span>
         </div>
       </div>
@@ -86,13 +86,13 @@ export function ChatInterface({ sessionId, onToggleFileSidebar, isFileSidebarOpe
 
   if (sessionError) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-slate-50">
+      <div className="flex-1 flex items-center justify-center bg-white dark:bg-gray-800">
         <div className="text-center space-y-3">
-          <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto">
-            <Bot className="w-6 h-6 text-red-600" />
+          <div className="w-12 h-12 bg-red-50 dark:bg-red-950/20 rounded-full flex items-center justify-center mx-auto">
+            <Bot className="w-6 h-6 text-red-600 dark:text-red-400" />
           </div>
-          <p className="text-red-600 font-medium">Failed to load conversation</p>
-          <p className="text-sm text-muted-foreground">Please try refreshing the page</p>
+          <p className="text-red-600 dark:text-red-400 font-medium">Failed to load conversation</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">Please try refreshing the page</p>
         </div>
       </div>
     )
@@ -101,19 +101,19 @@ export function ChatInterface({ sessionId, onToggleFileSidebar, isFileSidebarOpe
   const messages = session?.events || []
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-gradient-to-b from-white to-slate-50/30">
+    <div className="flex-1 flex flex-col h-full bg-white dark:bg-gray-800">
       {/* Chat Header */}
-      <div className="px-6 py-4 bg-white/80 backdrop-blur-sm border-b border-slate-200/60">
+      <div className="px-6 py-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-600 rounded-full flex items-center justify-center">
+            <div className="w-8 h-8 bg-blue-600 dark:bg-blue-500 rounded-full flex items-center justify-center">
               <Bot className="w-4 h-4 text-white" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-foreground">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                 AI Assistant
               </h2>
-              <p className="text-xs text-muted-foreground">Always here to help</p>
+              <p className="text-xs text-gray-600 dark:text-gray-400">Always here to help</p>
             </div>
           </div>
           
@@ -123,27 +123,27 @@ export function ChatInterface({ sessionId, onToggleFileSidebar, isFileSidebarOpe
               onClick={onToggleFileSidebar}
               variant="ghost"
               size="sm"
-              className="h-8 w-8 p-0 hover:bg-purple-100"
+              className="h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-gray-700"
             >
-              <Files className={`h-4 w-4 transition-colors ${isFileSidebarOpen ? 'text-purple-600' : 'text-gray-400'}`} />
+              <Files className={`h-4 w-4 transition-colors ${isFileSidebarOpen ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500'}`} />
             </Button>
           )}
         </div>
       </div>
 
       {/* Messages Area */}
-      <ScrollArea className="flex-1 px-4 md:px-6">
+      <ScrollArea className="flex-1 px-4 md:px-6 bg-gray-50 dark:bg-gray-900">
         {messages.length === 0 ? (
           <div className="flex-1 flex items-center justify-center min-h-[400px]">
             <div className="text-center space-y-4 max-w-md">
-              <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-blue-100 rounded-2xl flex items-center justify-center mx-auto">
-                <Sparkles className="w-8 h-8 text-purple-600" />
+              <div className="w-16 h-16 bg-blue-50 dark:bg-blue-950 rounded-2xl flex items-center justify-center mx-auto">
+                <Sparkles className="w-8 h-8 text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <h3 className="text-xl font-semibold text-foreground mb-2">
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                   Ready to chat!
                 </h3>
-                <p className="text-muted-foreground">
+                <p className="text-gray-600 dark:text-gray-400">
                   Ask me anything - I'm here to help with questions, tasks, or just have a conversation.
                 </p>
               </div>
@@ -171,10 +171,10 @@ export function ChatInterface({ sessionId, onToggleFileSidebar, isFileSidebarOpe
         )}
       </ScrollArea>
 
-      <Separator />
+      <Separator className="bg-gray-200 dark:bg-gray-700" />
 
       {/* Chat Input */}
-      <div className="bg-white/80 backdrop-blur-sm">
+      <div className="bg-white dark:bg-gray-800">
         <ChatInput 
           onSendMessage={handleSendMessage}
           sessionId={sessionId}

@@ -113,26 +113,26 @@ export function StartPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 flex flex-col">
+    <div className="min-h-full bg-gray-50 dark:bg-gray-900 flex flex-col">
       <div className="flex-1 flex items-center justify-center p-6 md:p-8">
         <div className="max-w-4xl w-full space-y-8">
           {/* Welcome Section */}
-          <div className="text-center space-y-6 animate-fade-in">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-purple-500 to-blue-600 rounded-2xl shadow-lg mb-6 animate-float animate-glow">
-              <Sparkles className="w-10 h-10 text-white" />
+          <div className="text-center space-y-6">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 dark:bg-blue-500 rounded-xl shadow-sm mb-6">
+              <MessageCircle className="w-8 h-8 text-white" />
             </div>
-            <div className="animate-slide-in-from-bottom">
-              <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-600 bg-clip-text text-transparent mb-4">
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
                 How can I help you today?
               </h1>
-              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
                 Start a conversation with your AI assistant. Ask questions, get help with tasks, or just chat.
               </p>
             </div>
           </div>
 
           {/* Chat Input Section */}
-          <Card className="shadow-xl border-0 bg-white/60 backdrop-blur-sm hover-lift animate-slide-in-from-bottom">
+          <Card className="shadow-sm border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
             <CardContent className="p-6">
               <div className="space-y-4">
                 <div className="relative">
@@ -141,12 +141,12 @@ export function StartPage() {
                     onChange={(e) => setMessage(e.target.value)}
                     onKeyDown={handleKeyPress}
                     placeholder="Message your AI assistant..."
-                    className="min-h-[120px] text-base resize-none border-0 focus:ring-2 focus:ring-purple-500/20 bg-white/80"
+                    className="min-h-[120px] text-base resize-none bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white border-gray-200 dark:border-gray-700 focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 placeholder:text-gray-500 dark:placeholder:text-gray-400"
                     disabled={isCreating}
                   />
                 </div>
                 <div className="flex flex-col sm:flex-row gap-3 justify-end items-center">
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                     <span>or</span>
                   </div>
                   <HeroFileUploadButton 
@@ -158,7 +158,7 @@ export function StartPage() {
                     onClick={() => handleStartChat()}
                     disabled={!message.trim() || isCreating}
                     size="lg"
-                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-8 shadow-lg order-last"
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-8 order-last"
                   >
                     {isCreating ? (
                       <>
@@ -179,7 +179,7 @@ export function StartPage() {
 
           {/* Example prompts */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-center text-gray-700">
+            <h3 className="text-lg font-semibold text-center text-gray-700 dark:text-gray-300">
               Or try one of these:
             </h3>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -188,20 +188,19 @@ export function StartPage() {
                 return (
                   <Card 
                     key={index}
-                    className="group cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-[1.02] border-0 bg-white/40 backdrop-blur-sm hover:bg-white/60 hover-lift animate-fade-in"
-                    style={{ animationDelay: `${index * 100}ms` }}
+                    className="group cursor-pointer transition-all duration-200 hover:shadow-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-blue-300 dark:hover:border-blue-600"
                     onClick={() => handleStartChat(example.prompt)}
                   >
                     <CardContent className="p-4">
                       <div className="flex items-start space-x-3">
-                        <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-purple-100 to-blue-100 rounded-lg flex items-center justify-center">
-                          <Icon className="w-4 h-4 text-purple-600" />
+                        <div className="flex-shrink-0 w-8 h-8 bg-blue-50 dark:bg-blue-950 rounded-lg flex items-center justify-center">
+                          <Icon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-medium text-gray-900 text-sm mb-1">
+                          <h4 className="font-medium text-gray-900 dark:text-white text-sm mb-1">
                             {example.title}
                           </h4>
-                          <p className="text-xs text-muted-foreground line-clamp-2">
+                          <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">
                             {example.prompt}
                           </p>
                         </div>

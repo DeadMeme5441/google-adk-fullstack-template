@@ -3,6 +3,7 @@ import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanstackDevtools } from '@tanstack/react-devtools'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+import { useEffect } from 'react'
 
 import Header from '../components/Header'
 import { AuthProvider } from '../lib/auth'
@@ -48,8 +49,20 @@ function RootDocument({ children }: { children: React.ReactNode }) {
     <html lang="en" className="h-full">
       <head>
         <HeadContent />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                const theme = localStorage.getItem('theme');
+                if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                  document.documentElement.classList.add('dark');
+                }
+              } catch {}
+            `,
+          }}
+        />
       </head>
-      <body className="h-full">
+      <body className="h-full bg-gray-50 dark:bg-gray-900">
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
             <div className="h-full flex flex-col">

@@ -13,12 +13,12 @@ export function ChatLayout({ sessionId }: ChatLayoutProps) {
   return (
     <div className="flex h-full chat-container">
       {/* Left Sidebar - Chat Sessions */}
-      <div className="w-80 bg-gray-50 border-r flex-shrink-0 hidden md:block">
+      <div className="w-80 bg-gray-50 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 flex-shrink-0 hidden md:block">
         <ChatSidebar currentSessionId={sessionId} />
       </div>
       
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col min-h-0 relative">
+      <div className="flex-1 flex flex-col min-h-0 relative bg-white dark:bg-gray-800">
         <ChatInterface 
           sessionId={sessionId}
           onToggleFileSidebar={() => setIsFileSidebarOpen(!isFileSidebarOpen)}

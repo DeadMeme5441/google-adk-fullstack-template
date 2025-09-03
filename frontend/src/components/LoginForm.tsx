@@ -4,6 +4,7 @@ import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { Card } from './ui/card'
 import { useAuth } from '../lib/auth'
+import { Eye, EyeOff, User, Lock } from 'lucide-react'
 
 export function LoginForm() {
   const [formData, setFormData] = useState({
@@ -12,6 +13,7 @@ export function LoginForm() {
   })
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
   const { login } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -37,73 +39,105 @@ export function LoginForm() {
   }
 
   return (
-    <Card className="w-full max-w-md mx-auto p-6">
-      <div className="text-center mb-6">
-        <h1 className="text-2xl font-bold">Sign In</h1>
-        <p className="text-sm text-muted-foreground mt-2">
-          Enter your credentials to access your account
-        </p>
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label htmlFor="email_or_username" className="text-sm font-medium">
-            Email or Username
-          </label>
-          <Input
-            id="email_or_username"
-            name="email_or_username"
-            type="text"
-            value={formData.email_or_username}
-            onChange={handleChange}
-            placeholder="Enter your email or username"
-            required
-            className="mt-1"
-          />
-        </div>
-
-        <div>
-          <label htmlFor="password" className="text-sm font-medium">
-            Password
-          </label>
-          <Input
-            id="password"
-            name="password"
-            type="password"
-            value={formData.password}
-            onChange={handleChange}
-            placeholder="Enter your password"
-            required
-            className="mt-1"
-          />
-        </div>
-
-        {error && (
-          <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md">
-            {error}
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-900">
+      <Card className="w-full max-w-md shadow-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+        <div className="p-6">
+          {/* Simple, clean header */}
+          <div className="text-center mb-6">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              Sign In
+            </h1>
+            <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+              Enter your credentials to access your account
+            </p>
           </div>
-        )}
 
-        <Button 
-          type="submit" 
-          className="w-full" 
-          disabled={isLoading}
-        >
-          {isLoading ? 'Signing in...' : 'Sign In'}
-        </Button>
-      </form>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Email/username input with icon */}
+            <div className="space-y-1">
+              <label htmlFor="email_or_username" className="text-sm font-medium text-foreground">
+                Email or Username
+              </label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  id="email_or_username"
+                  name="email_or_username"
+                  type="text"
+                  value={formData.email_or_username}
+                  onChange={handleChange}
+                  placeholder="Enter your email or username"
+                  required
+                  className="pl-10 h-11"
+                />
+              </div>
+            </div>
 
-      <div className="text-center mt-6">
-        <p className="text-sm text-muted-foreground">
-          Don't have an account?{' '}
-          <Link 
-            to="/register" 
-            className="font-medium text-primary hover:underline"
-          >
-            Sign up
-          </Link>
-        </p>
-      </div>
-    </Card>
+            {/* Password input with visibility toggle */}
+            <div className="space-y-1">
+              <label htmlFor="password" className="text-sm font-medium text-foreground">
+                Password
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  id="password"
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={formData.password}
+                  onChange={handleChange}
+                  placeholder="Enter your password"
+                  required
+                  className="pl-10 pr-10 h-11"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            {/* Error message */}
+            {error && (
+              <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-md">
+                <p className="text-sm text-destructive">{error}</p>
+              </div>
+            )}
+
+            {/* Submit button */}
+            <Button 
+              type="submit" 
+              disabled={isLoading}
+              className="w-full h-11 font-medium"
+            >
+              {isLoading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                  Signing in...
+                </>
+              ) : (
+                'Sign In'
+              )}
+            </Button>
+          </form>
+
+          {/* Footer */}
+          <div className="text-center mt-6 pt-4 border-t border-border">
+            <p className="text-sm text-muted-foreground">
+              Don't have an account?{' '}
+              <Link 
+                to="/register" 
+                className="font-medium text-primary hover:underline"
+              >
+                Sign up
+              </Link>
+            </p>
+          </div>
+        </div>
+      </Card>
+    </div>
   )
 }

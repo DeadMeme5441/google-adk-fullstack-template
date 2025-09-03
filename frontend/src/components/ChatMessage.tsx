@@ -30,14 +30,14 @@ export function ChatMessage({ event, isLoading = false }: ChatMessageProps) {
       <Avatar className={cn(
         "w-8 h-8 flex-shrink-0",
         isUser 
-          ? "bg-gradient-to-br from-purple-500 to-blue-600" 
-          : "bg-gradient-to-br from-green-500 to-emerald-600"
+          ? "bg-blue-600 dark:bg-blue-500" 
+          : "bg-gray-600 dark:bg-gray-500"
       )}>
         <AvatarFallback className={cn(
           "text-white text-xs font-medium border-0",
           isUser 
-            ? "bg-gradient-to-br from-purple-500 to-blue-600" 
-            : "bg-gradient-to-br from-green-500 to-emerald-600"
+            ? "bg-blue-600 dark:bg-blue-500" 
+            : "bg-gray-600 dark:bg-gray-500"
         )}>
           {isUser ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
         </AvatarFallback>
@@ -46,16 +46,16 @@ export function ChatMessage({ event, isLoading = false }: ChatMessageProps) {
       {/* Message Content */}
       <div className={cn("flex-1 space-y-1", isUser ? "items-end" : "items-start")}>
         {/* Name */}
-        <div className={cn("text-xs font-medium text-muted-foreground px-1", isUser ? "text-right" : "text-left")}>
+        <div className={cn("text-xs font-medium text-gray-600 dark:text-gray-400 px-1", isUser ? "text-right" : "text-left")}>
           {isUser ? 'You' : 'AI Assistant'}
         </div>
 
         {/* Message Bubble */}
         {isUser ? (
-          // User message - gradient bubble
+          // User message - blue bubble
           <div className={cn(
-            "inline-block max-w-[80%] rounded-2xl px-4 py-3",
-            "bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg",
+            "inline-block max-w-[80%] rounded-lg px-4 py-3",
+            "bg-blue-600 dark:bg-blue-500 text-white shadow-sm",
             "ml-auto"
           )}>
             {isLoading ? (
@@ -75,22 +75,22 @@ export function ChatMessage({ event, isLoading = false }: ChatMessageProps) {
           </div>
         ) : (
           // Assistant message - card style
-          <Card className="max-w-[80%] border-0 shadow-md bg-white/80 backdrop-blur-sm">
+          <Card className="max-w-[80%] border border-gray-200 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-800">
             <CardContent className="p-4">
               {isLoading ? (
                 <div className="flex items-center space-x-3">
                   <div className="flex space-x-1">
-                    <div className="w-2 h-2 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                    <div className="w-2 h-2 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                    <div className="w-2 h-2 bg-blue-600 dark:bg-blue-500 rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-blue-600 dark:bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                    <div className="w-2 h-2 bg-blue-600 dark:bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
                   </div>
                   <div className="flex items-center space-x-1">
-                    <Sparkles className="w-3 h-3 text-green-600 animate-pulse" />
-                    <span className="text-muted-foreground text-sm">Thinking...</span>
+                    <Sparkles className="w-3 h-3 text-blue-600 dark:text-blue-400 animate-pulse" />
+                    <span className="text-gray-600 dark:text-gray-400 text-sm">Thinking...</span>
                   </div>
                 </div>
               ) : (
-                <div className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+                <div className="whitespace-pre-wrap text-sm leading-relaxed text-gray-900 dark:text-white">
                   {messageText}
                 </div>
               )}
@@ -101,7 +101,7 @@ export function ChatMessage({ event, isLoading = false }: ChatMessageProps) {
         {/* Metadata */}
         {event.finishReason && !isLoading && (
           <div className={cn(
-            "text-[10px] text-muted-foreground/60 px-1",
+            "text-[10px] text-gray-500 dark:text-gray-400 px-1",
             isUser ? "text-right" : "text-left"
           )}>
             {event.finishReason}
