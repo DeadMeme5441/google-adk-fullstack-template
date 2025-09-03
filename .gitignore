@@ -1,0 +1,27 @@
+# Root-level ignores
+
+# Explicit ignores (root)
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+/.claude/
+/.gemini/
+
+# Keep key files tracked
+!/README.md
+!/.gitignore
+!/.gitattributes
+!/.env.example
+
+# Ignore extra compose files (keep only docker-compose.yaml tracked)
+/docker-compose.override.yaml
+/deployment/docker-compose.prod.yaml
+
+# Common OS/editor noise
+/.DS_Store
+/.vscode/
+/.idea/
+
+# Logs and local env
+*.log
+.env

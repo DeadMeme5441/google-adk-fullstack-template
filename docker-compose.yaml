@@ -1,0 +1,281 @@
+# ==============================================================================
+# Google ADK Template - Docker Compose Development Environment
+# ==============================================================================
+
+
+services:
+  # =============================================================================
+  # Backend Service - Google ADK Agent
+  # =============================================================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: google-adk-backend
+    ports:
+      - "${HOST_PORT:-8000}:8000"
+    environment:
+      # Agent Configuration
+      - AGENT_NAME=${AGENT_NAME:-google_adk_assistant}
+      - AGENT_MODEL=${AGENT_MODEL:-gemini-2.0-flash-exp}
+      - AGENT_DESCRIPTION=${AGENT_DESCRIPTION:-A helpful AI assistant powered by Google ADK}
+      
+      # Model Provider
+      - MODEL_PROVIDER=${MODEL_PROVIDER:-gemini}
+      
+      # Google Configuration
+      - GOOGLE_GENAI_USE_VERTEXAI=${GOOGLE_GENAI_USE_VERTEXAI:-False}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT}
+      - GOOGLE_CLOUD_LOCATION=${GOOGLE_CLOUD_LOCATION:-us-central1}
+      
+      # LiteLLM Configuration (if using)
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - COHERE_API_KEY=${COHERE_API_KEY}
+      - OLLAMA_API_BASE=http://ollama:11434
+      - LITELLM_DEBUG=${LITELLM_DEBUG:-False}
+      
+      # Server Configuration
+      - HOST=0.0.0.0
+      - PORT=8000
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - SERVE_WEB_INTERFACE=${SERVE_WEB_INTERFACE:-True}
+      - RELOAD_AGENTS=${RELOAD_AGENTS:-True}
+      - SESSION_SERVICE_TYPE=${SESSION_SERVICE_TYPE:-inmemory}
+      - ARTIFACT_SERVICE_TYPE=${ARTIFACT_SERVICE_TYPE:-inmemory}
+      - AUTH_DB_URL=${AUTH_DB_URL:-sqlite+aiosqlite:///./data/auth.db}
+      - AUTH_STORAGE_TYPE=${AUTH_STORAGE_TYPE:-auto}
+      
+      # MongoDB Configuration
+      - MONGO_URL=mongodb://mongodb:27017
+      - MONGO_DB_NAME=${MONGO_DB_NAME:-adk_sessions}
+      - MONGO_COLLECTION_NAME=${MONGO_COLLECTION_NAME:-sessions}
+      
+      # S3/MinIO Configuration
+      - S3_BUCKET_NAME=${S3_BUCKET_NAME:-adk-artifacts}
+      - S3_ENDPOINT_URL=http://minio:9000
+      - AWS_ACCESS_KEY_ID=${MINIO_ACCESS_KEY:-minioadmin}
+      - AWS_SECRET_ACCESS_KEY=${MINIO_SECRET_KEY:-minioadmin}
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+    volumes:
+      # Development: mount source for hot reload (uncomment for development)
+      # - ./backend:/app
+      # - /app/.venv  # Keep virtual environment separate
+      
+      # Production: only mount data if needed
+      - agent_data:/app/data
+    # depends managed dynamically via profiles/overrides
+    networks:
+      - adk-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # =============================================================================
+  # Frontend Service - React Application
+  # =============================================================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: google-adk-frontend
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    environment:
+      - VITE_API_URL=http://localhost:${HOST_PORT:-8000}
+      - NODE_ENV=${NODE_ENV:-development}
+    volumes:
+      # Development: mount source for hot reload
+      - ./frontend:/app
+      - /app/node_modules  # Keep node_modules separate
+    depends_on:
+      - backend
+    networks:
+      - adk-network
+    restart: unless-stopped
+
+  # =============================================================================
+  # MongoDB Service - Session Storage
+  # =============================================================================
+  mongodb:
+    image: mongo:7.0
+    container_name: google-adk-mongodb
+    profiles: ["session-mongo"]
+    ports:
+      - "${MONGO_PORT:-27017}:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_ROOT_USERNAME:-admin}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_ROOT_PASSWORD:-password}
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+      # Optional: Add init scripts
+      # - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js
+    networks:
+      - adk-network
+    restart: unless-stopped
+    command: --quiet  # Reduce log verbosity
+
+  # =============================================================================
+  # MinIO Service - S3-Compatible Artifact Storage
+  # =============================================================================
+  minio:
+    image: minio/minio:latest
+    container_name: google-adk-minio
+    profiles: ["artifacts-minio"]
+    ports:
+      - "${MINIO_API_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    environment:
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-minioadmin}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-minioadmin}
+      - MINIO_ROOT_USER=${MINIO_ACCESS_KEY:-minioadmin}
+      - MINIO_ROOT_PASSWORD=${MINIO_SECRET_KEY:-minioadmin}
+    volumes:
+      - minio_data:/data
+    networks:
+      - adk-network
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  # =============================================================================
+  # MinIO Bucket Initialization
+  # =============================================================================
+  minio-init:
+    image: minio/mc:latest
+    container_name: google-adk-minio-init
+    profiles: ["artifacts-minio"]
+    depends_on:
+      - minio
+    networks:
+      - adk-network
+    entrypoint: >
+      /bin/sh -c "
+      echo 'Waiting for MinIO to be ready...';
+      until mc alias set minio http://minio:9000 ${MINIO_ACCESS_KEY:-minioadmin} ${MINIO_SECRET_KEY:-minioadmin}; do
+        echo 'MinIO not ready yet, waiting...';
+        sleep 2;
+      done;
+      echo 'MinIO is ready, creating bucket...';
+      mc mb minio/${S3_BUCKET_NAME:-adk-artifacts} --ignore-existing;
+      mc policy set public minio/${S3_BUCKET_NAME:-adk-artifacts};
+      echo 'Bucket created and policy set.';
+      exit 0;
+      "
+
+  # =============================================================================
+  # Ollama Service - Local LLM Models (Optional)
+  # =============================================================================
+  # Uncomment this service if you want to use local models via Ollama
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   container_name: google-adk-ollama
+  #   profiles: ["ollama"]
+  #   ports:
+  #     - "${OLLAMA_PORT:-11434}:11434"
+  #   volumes:
+  #     - ollama_data:/root/.ollama
+  #   networks:
+  #     - adk-network
+  #   restart: unless-stopped
+  #   # Uncomment below if you have GPU support
+  #   # deploy:
+  #   #   resources:
+  #   #     reservations:
+  #   #       devices:
+  #   #         - driver: nvidia
+  #   #           count: 1
+  #   #           capabilities: [gpu]
+
+  # =============================================================================
+  # MongoDB Express - Database Admin Interface (Optional)
+  # =============================================================================
+  mongo-express:
+    image: mongo-express:latest
+    container_name: google-adk-mongo-express
+    profiles: ["tools", "session-mongo"]  # Start with tools or when mongo profile enabled
+    ports:
+      - "${MONGO_EXPRESS_PORT:-8081}:8081"
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=mongodb
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=${MONGO_ROOT_USERNAME:-admin}
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=${MONGO_ROOT_PASSWORD:-password}
+      - ME_CONFIG_BASICAUTH_USERNAME=${MONGO_EXPRESS_USERNAME:-admin}
+      - ME_CONFIG_BASICAUTH_PASSWORD=${MONGO_EXPRESS_PASSWORD:-pass}
+    depends_on:
+      - mongodb
+    networks:
+      - adk-network
+    restart: unless-stopped
+
+# ==============================================================================
+# Networks
+# ==============================================================================
+networks:
+  adk-network:
+    driver: bridge
+    name: google-adk-network
+
+# ==============================================================================
+# Volumes
+# ==============================================================================
+volumes:
+  mongodb_data:
+    name: google-adk-mongodb-data
+  mongodb_config:
+    name: google-adk-mongodb-config
+  minio_data:
+    name: google-adk-minio-data
+  agent_data:
+    name: google-adk-agent-data
+  # ollama_data:
+  #   name: google-adk-ollama-data
+
+# ==============================================================================
+# Usage Instructions
+# ==============================================================================
+#
+# 1. Development Setup (dynamic services):
+#    # Default (in-memory sessions/artifacts)
+#    docker-compose up --build
+#    # With Mongo sessions
+#    docker-compose --profile session-mongo up --build
+#    # With MinIO artifacts (S3)
+#    docker-compose --profile artifacts-minio up --build
+#    # With both
+#    docker-compose --profile session-mongo --profile artifacts-minio up --build
+#
+# 2. Production Setup:
+#    docker-compose -f docker-compose.yaml up -d
+#
+# 3. With Admin Tools:
+#    docker-compose --profile tools up
+#
+# 4. Scale Services:
+#    docker-compose up --scale backend=3
+#
+# 5. View Logs:
+#    docker-compose logs -f backend
+#
+# 6. Development with Hot Reload:
+#    - Uncomment volume mounts in backend service
+#    - Set RELOAD_AGENTS=True
+#
+# 7. Access Services:
+#    - Backend API: http://localhost:8000
+#    - Backend Web UI: http://localhost:8000
+#    - Frontend: http://localhost:3000
+#    - MinIO Console: http://localhost:9001
+#    - MongoDB Express: http://localhost:8081 (with --profile tools)
+#
+# ==============================================================================
