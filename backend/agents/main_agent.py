@@ -3,13 +3,14 @@
 import os
 from google.adk.agents import Agent
 from google.adk.tools import google_search
+from google.adk.tools.openapi_tool.openapi_spec_parser.openapi_toolset import OpenAPIToolset
 from loguru import logger
 
 # Import configuration system
 from config import settings
 
 # Import OpenAPI Tools Template Framework
-from tools import ToolRegistry
+from tools import list_registered_tools
 
 # Optional: Import LiteLLM for non-Google models
 try:
@@ -58,23 +59,31 @@ def get_agent_tools():
     # Start with built-in tools
     tools = [google_search]
     
-    # Add OpenAPI-based tools from configuration
+    # Add unified OpenAPI toolset that includes all registered tools
     try:
-        registry = ToolRegistry()
-        openapi_toolsets = registry.get_all_toolsets()
-        tools.extend(openapi_toolsets)
+        # Check if any tools are registered
+        registered_tools = list_registered_tools()
+        has_tools = any(registered_tools.values())
         
-        # Log which APIs are enabled
-        available_apis = registry.list_available_apis()
-        enabled_apis = [name for name, info in available_apis.items() if info["enabled"]]
-        
-        if enabled_apis:
-            logger.info(f"Loaded OpenAPI tools for: {', '.join(enabled_apis)}")
+        if has_tools:
+            # Create unified OpenAPIToolset pointing to our FastAPI server
+            unified_toolset = OpenAPIToolset(
+                spec_str=f"http://localhost:{settings.port}/openapi.json",
+                spec_str_type="url"
+            )
+            tools.append(unified_toolset)
+            
+            # Log which tools are available
+            logger.info("Unified OpenAPI toolset loaded with access to all registered tools:")
+            for tool_type, tool_configs in registered_tools.items():
+                if tool_configs:
+                    logger.info(f"  {tool_type}: {list(tool_configs.keys())}")
         else:
-            logger.info("No OpenAPI tools enabled. Edit backend/tools/tools_config.yaml to add APIs.")
+            logger.info("No tools registered. Use register_api_tool(), register_fastmcp_tool(), or register_custom_tool() to add tools.")
             
     except Exception as e:
-        logger.warning(f"Error loading OpenAPI tools: {e}")
+        logger.warning(f"Error loading unified OpenAPI toolset: {e}")
+        logger.warning("Agent will only have access to built-in tools (google_search)")
     
     return tools
 
@@ -119,12 +128,16 @@ root_agent = Agent(
     - Ask clarifying questions when needed
     
     **Available Tools**: 
-    You have access to web search and any OpenAPI-based tools configured in the system.
-    Check the available tools and use them appropriately to assist users.
+    You have access to web search and any tools registered through the Python-based tools system.
+    All registered tools are available through a unified OpenAPI interface.
     
     **Template Framework**: 
-    This agent uses an OpenAPI Tools Template Framework. Administrators can add new APIs
-    by editing backend/tools/tools_config.yaml or using the ToolRegistry programmatically.""",
+    This agent uses an OpenAPI Tools Template Framework. Developers can register new tools by calling:
+    - register_api_tool() for external REST APIs with authentication
+    - register_fastmcp_tool() for FastMCP servers  
+    - register_custom_tool() for custom handlers
+    
+    All tools are automatically exposed through /tools/* endpoints and unified in the OpenAPI spec.""",
     
     # Tools available to the agent - customize as needed
     tools=get_agent_tools(),
@@ -142,7 +155,7 @@ root_agent = Agent(
         ],
         "template_version": "1.0.0",
         "framework": "OpenAPI Tools Template Framework",
-        "customization_guide": "Edit backend/tools/tools_config.yaml to add APIs, or modify this file for other customizations"
+        "customization_guide": "Use register_api_tool(), register_fastmcp_tool(), or register_custom_tool() to add tools programmatically"
     }
 )
 

@@ -19,10 +19,10 @@ class OpenAPIToolConfig(BaseModel):
         description="URL (https://api.example.com/openapi.json) or local file (todo_api.yaml)"
     )
     
-    # Integration method: 'direct' uses OpenAPIToolset, 'fastmcp' uses FastMCP+MCPToolset
+    # Integration method: 'direct' uses OpenAPIToolset directly, 'fastmcp' points to FastMCP HTTP server
     integration_method: Literal["direct", "fastmcp"] = Field(
         default="direct",
-        description="Integration method: 'direct' or 'fastmcp'"
+        description="Integration method: 'direct' (raw OpenAPI) or 'fastmcp' (FastMCP HTTP server)"
     )
     
     # Cache settings for URL-based specs

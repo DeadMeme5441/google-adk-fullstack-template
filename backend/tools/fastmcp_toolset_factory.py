@@ -1,31 +1,70 @@
 """
-Factory for creating MCPToolsets using FastMCP integration.
+Factory for creating OpenAPIToolsets that consume FastMCP HTTP tool servers.
 
-This factory creates FastMCP servers from OpenAPI specifications and then 
-connects to them using Google ADK's MCPToolset, enabling the full MCP ecosystem.
+This factory spins up FastMCP HTTP servers dynamically for each configured API,
+then creates OpenAPIToolsets that consume these servers via their auto-generated
+OpenAPI endpoints. This provides a unified OpenAPI consumption model while 
+leveraging FastMCP's advanced capabilities.
+
+Architecture:
+- OpenAPI spec → FastMCP.from_openapi() → HTTP server → OpenAPIToolset  
+- MCP server → FastMCP.as_proxy() → HTTP server → OpenAPIToolset
 """
 
 import os
 import json
 import yaml
 import asyncio
+import httpx
+import subprocess
+import time
+import signal
 from pathlib import Path
 from typing import Optional, Dict, Any, List
 from contextlib import asynccontextmanager
 
-from google.adk.tools.mcp_tool.mcp_toolset import MCPToolset
-from google.adk.tools.mcp_tool.mcp_session_manager import StdioConnectionParams
+from google.adk.tools.openapi_tool.openapi_spec_parser.openapi_toolset import OpenAPIToolset
 from google.adk.tools.base_toolset import BaseToolset
-from mcp import StdioServerParameters
 
 from .config import OpenAPIToolConfig
+from .spec_loader import load_spec_sync, override_server_url
+
+
+class ToolServer:
+    """Represents a running FastMCP HTTP tool server."""
+    
+    def __init__(self, name: str, port: int, process: subprocess.Popen, config_file: Path):
+        self.name = name
+        self.port = port
+        self.process = process
+        self.config_file = config_file
+        self.url = f"http://localhost:{port}"
+        self.openapi_url = f"http://localhost:{port}/openapi.json"
+    
+    def is_running(self) -> bool:
+        """Check if the server process is still running."""
+        return self.process.poll() is None
+    
+    def stop(self):
+        """Stop the server process."""
+        if self.is_running():
+            try:
+                self.process.terminate()
+                self.process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                self.process.kill()
+                self.process.wait()
+        
+        # Clean up config file
+        if self.config_file.exists():
+            self.config_file.unlink()
 
 
 class FastMCPToolsetFactory:
-    """Factory for creating MCPToolsets via FastMCP from OpenAPI specifications."""
+    """Factory that spins up FastMCP HTTP servers and creates OpenAPIToolsets to consume them."""
     
     def __init__(self, specs_dir: Path, host: str = "localhost", port_range: tuple[int, int] = (9000, 9100)):
-        """Initialize factory with directory containing OpenAPI specs.
+        """Initialize factory for dynamic tool server management.
         
         Args:
             specs_dir: Path to directory containing OpenAPI specification files
@@ -36,56 +75,75 @@ class FastMCPToolsetFactory:
         self.host = host
         self.port_range = port_range
         self._next_port = port_range[0]
-        self._created_servers: Dict[str, Dict[str, Any]] = {}
+        self._tool_servers: Dict[str, ToolServer] = {}
+        self._server_configs_dir = specs_dir.parent / "fastmcp_servers"
+        self._server_configs_dir.mkdir(exist_ok=True)
     
     def create_toolset(
         self, 
         api_name: str, 
         config: OpenAPIToolConfig
     ) -> Optional[BaseToolset]:
-        """Create an MCPToolset via FastMCP from configuration.
+        """Create an OpenAPIToolset that consumes a FastMCP HTTP server.
+        
+        This method:
+        1. Spins up a FastMCP HTTP server for the API
+        2. Waits for it to be ready
+        3. Creates an OpenAPIToolset pointing to its OpenAPI endpoint
         
         Args:
             api_name: Name identifier for this API
             config: Configuration for this API
             
         Returns:
-            MCPToolset instance or None if creation failed
+            OpenAPIToolset instance or None if creation failed
         """
         if not config.enabled:
             print(f"Skipping disabled API: {api_name}")
             return None
-            
-        spec_path = self.specs_dir / config.spec_file
-        if not spec_path.exists():
-            print(f"Warning: OpenAPI spec not found: {spec_path}")
-            return None
         
         try:
-            # Create FastMCP server configuration
-            server_config = self._create_fastmcp_server_config(api_name, config, spec_path)
+            # Stop existing server if running
+            if api_name in self._tool_servers:
+                print(f"Stopping existing tool server for {api_name}")
+                self._tool_servers[api_name].stop()
+                del self._tool_servers[api_name]
             
-            # Create MCPToolset that connects to the FastMCP server
-            print(f"Creating MCPToolset for {api_name} (FastMCP integration)")
-            toolset = MCPToolset(
-                connection_params=StdioConnectionParams(
-                    server_params=StdioServerParameters(
-                        command='python',
-                        args=['-m', 'fastmcp.cli', 'run', server_config['config_file']],
-                        # Pass environment variables for auth
-                        env=self._get_server_env(config)
-                    ),
-                ),
-                tool_filter=config.operation_filter,  # MCPToolset supports filtering directly
+            # Start FastMCP HTTP server
+            tool_server = self._start_fastmcp_server(api_name, config)
+            if not tool_server:
+                return None
+            
+            # Wait for server to be ready
+            if not self._wait_for_server_ready(tool_server):
+                print(f"FastMCP server for {api_name} failed to start")
+                tool_server.stop()
+                return None
+            
+            # Create OpenAPIToolset pointing to the FastMCP server
+            print(f"Creating OpenAPIToolset for {api_name} via FastMCP server at {tool_server.openapi_url}")
+            
+            # Determine auth configuration
+            auth_scheme, auth_credential = self._resolve_auth(config)
+            
+            toolset = OpenAPIToolset(
+                spec_str=tool_server.openapi_url,  # Point to FastMCP's OpenAPI endpoint
+                spec_str_type="url",
+                auth_scheme=auth_scheme,
+                auth_credential=auth_credential
             )
             
-            # Store server info for cleanup
-            self._created_servers[api_name] = server_config
+            # Store the running server
+            self._tool_servers[api_name] = tool_server
             
             return toolset
             
         except Exception as e:
             print(f"Error creating FastMCP toolset for {api_name}: {e}")
+            # Cleanup on failure
+            if api_name in self._tool_servers:
+                self._tool_servers[api_name].stop()
+                del self._tool_servers[api_name]
             return None
     
     def _create_fastmcp_server_config(

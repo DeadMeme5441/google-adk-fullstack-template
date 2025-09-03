@@ -28,6 +28,9 @@ from services.service_factory import ServiceFactory, get_service_availability
 from routes.auth import router as auth_router
 from middleware.auth import get_current_user_id
 
+# Import tools system
+from tools import get_tools_router, list_registered_tools
+
 # Get the directory where main.py is located
 AGENT_DIR = Path(__file__).parent.resolve()
 
@@ -83,6 +86,22 @@ app.state.auth_service = auth_service
 
 # Include auth router
 app.include_router(auth_router)
+
+# Include tools router
+tools_router = get_tools_router()
+app.include_router(tools_router)
+
+# Log registered tools
+registered_tools = list_registered_tools()
+if any(registered_tools.values()):
+    logger.info("Registered tools:")
+    for tool_type, tools in registered_tools.items():
+        if tools:
+            logger.info(f"  {tool_type}:")
+            for name, config in tools.items():
+                logger.info(f"    - {name}: {config.get('proxy_prefix', f'/tools/{name}')}")
+else:
+    logger.info("No tools registered. Register tools in agents/main_agent.py or other modules.")
 
 logger.info(f"Services initialized:")
 

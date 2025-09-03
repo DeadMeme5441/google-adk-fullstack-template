@@ -1,33 +1,46 @@
 # OpenAPI Tools Template Framework
 
-A powerful template framework for automatically integrating OpenAPI-based REST APIs into Google ADK agents. This framework supports both direct OpenAPI integration and MCP (Model Context Protocol) integration via FastMCP.
+A powerful Python-based system for integrating external APIs, FastMCP servers, and custom tools into Google ADK agents. This framework automatically generates FastAPI endpoints and unified OpenAPI specifications, making all tools accessible to your agents through a single interface.
 
 ## 🚀 Quick Start
 
-1. **Edit the configuration file**:
-   ```bash
-   nano backend/tools/tools_config.yaml
-   ```
+### 1. Register Your First Tool
 
-2. **Add your API** (example):
-   ```yaml
-   apis:
-     my_api:
-       spec_source: "https://api.example.com/openapi.json"
-       integration_method: direct
-       operation_filter: ["getUsers", "createUser"]
-       tool_prefix: "user_"
-       auth_scheme: "api_key"
-       auth_credential: "MY_API_KEY"
-       enabled: true
-   ```
+Edit `backend/tools/integrations.py`:
 
-3. **Set environment variables** (if using auth):
-   ```bash
-   export MY_API_KEY="your-api-key-here"
-   ```
+```python
+from tools import register_api_tool
 
-4. **Start your agent** - tools are automatically loaded!
+# Register an external API
+register_api_tool(
+    name="github",
+    base_url="https://api.github.com",
+    auth={
+        "type": "bearer",
+        "token_env": "GITHUB_TOKEN"
+    },
+    enabled=True
+)
+```
+
+### 2. Set Environment Variables
+
+```bash
+export GITHUB_TOKEN="your_github_token_here"
+```
+
+### 3. Start Your Server
+
+```bash
+cd backend
+python main.py
+```
+
+### 4. Test Your Tool
+
+Visit `http://localhost:8000/docs` to see your tool endpoints under `/tools/github/`
+
+Your ADK agent automatically has access to all registered tools! ✨
 
 ## 🏗️ Architecture
 

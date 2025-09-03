@@ -1,317 +1,548 @@
 """
-Central registry for managing OpenAPI toolsets in the ADK template.
+Central registry for managing and generating tool endpoints.
 
-This module provides the main ToolRegistry class that automatically discovers
-OpenAPI configurations and creates the appropriate toolsets using either
-direct integration or FastMCP.
+This module provides the core functionality for registering different types of tools
+and generating FastAPI routes that proxy requests to external APIs or services.
 """
 
 import os
-from pathlib import Path
-from typing import List, Dict, Optional, Any
+import asyncio
+import httpx
+from typing import Dict, List, Optional, Any, Callable, Union
+from fastapi import FastAPI, APIRouter, HTTPException, Request, Response, Depends
+from fastapi.openapi.utils import get_openapi
+from fastapi.responses import JSONResponse
+from loguru import logger
 
-from google.adk.tools.base_toolset import BaseToolset
-
-from .config import ToolsConfig, DEFAULT_CONFIG
-from .openapi_toolset_factory import OpenAPIToolsetFactory
-from .fastmcp_toolset_factory import FastMCPToolsetFactory
+from .config_models import APIToolConfig, FastMCPToolConfig, CustomToolConfig
+from .api_proxy import APIProxyHandler
+from .fastmcp_proxy import FastMCPProxyHandler
 
 
 class ToolRegistry:
-    """Central registry for managing OpenAPI-based toolsets."""
+    """Central registry for managing all registered tools."""
     
-    def __init__(
-        self, 
-        tools_dir: Optional[Path] = None,
-        config_file: Optional[Path] = None,
-        config: Optional[ToolsConfig] = None
+    def __init__(self):
+        self._api_tools: Dict[str, APIToolConfig] = {}
+        self._fastmcp_tools: Dict[str, FastMCPToolConfig] = {}
+        self._custom_tools: Dict[str, CustomToolConfig] = {}
+        self._router: Optional[APIRouter] = None
+        self._proxy_handlers: Dict[str, Union[APIProxyHandler, FastMCPProxyHandler]] = {}
+    
+    def register_api_tool(
+        self,
+        name: str,
+        spec_url: Optional[str] = None,
+        base_url: str = "",
+        auth: Optional[Dict[str, Any]] = None,
+        operations: Optional[List[str]] = None,
+        tags: Optional[List[str]] = None,
+        enabled: bool = True,
+        proxy_prefix: Optional[str] = None
     ):
-        """Initialize the tool registry.
+        """Register an external API as a tool.
         
         Args:
-            tools_dir: Base directory for tools (default: current file's parent)
-            config_file: Path to configuration file (default: tools_dir/tools_config.yaml)
-            config: Pre-loaded configuration (overrides config_file)
+            name: Unique name for the tool
+            spec_url: URL to OpenAPI specification (optional)
+            base_url: Base URL for the API
+            auth: Authentication configuration
+                - {"type": "bearer", "token_env": "GITHUB_TOKEN"}
+                - {"type": "api_key", "key_env": "API_KEY", "location": "header|query"}
+                - {"type": "basic", "username_env": "USER", "password_env": "PASS"}
+            operations: List of specific operations to expose (None = all)
+            tags: Tags for grouping tools
+            enabled: Whether to enable this tool
+            proxy_prefix: Custom prefix (defaults to /tools/{name})
         """
-        # Set up directories
-        self.tools_dir = tools_dir or Path(__file__).parent
-        self.specs_dir = self.tools_dir / "openapi_specs"
-        self.cache_dir = self.tools_dir / "cache"
+        if name in self._api_tools:
+            logger.warning(f"API tool '{name}' already registered, replacing")
         
-        # Load configuration
-        if config:
-            self.config = config
-        else:
-            config_path = config_file or (self.tools_dir / "tools_config.yaml")
-            self.config = ToolsConfig.load_from_file(config_path)
-            
-            # Create default config file if it doesn't exist
-            if not config_path.exists():
-                print(f"Creating default tools configuration: {config_path}")
-                DEFAULT_CONFIG.save_to_file(config_path)
-                self.config = DEFAULT_CONFIG
-        
-        # Initialize factories
-        self.openapi_factory = OpenAPIToolsetFactory(
-            specs_dir=self.specs_dir,
-            cache_dir=self.cache_dir
-        )
-        self.fastmcp_factory = FastMCPToolsetFactory(
-            specs_dir=self.specs_dir,
-            host=self.config.fastmcp_host,
-            port_range=self.config.fastmcp_port_range
+        config = APIToolConfig(
+            name=name,
+            spec_url=spec_url,
+            base_url=base_url,
+            auth=auth,
+            operations=operations,
+            tags=tags or [],
+            enabled=enabled,
+            proxy_prefix=proxy_prefix or f"/tools/{name}"
         )
         
-        # Cache for created toolsets
-        self._toolsets: Dict[str, BaseToolset] = {}
-        self._initialized = False
-    
-    def get_all_toolsets(self) -> List[BaseToolset]:
-        """Get all enabled toolsets based on configuration.
+        self._api_tools[name] = config
+        self._router = None  # Force router regeneration
         
-        Returns:
-            List of BaseToolset instances ready to use in agents
-        """
-        if not self._initialized:
-            self._create_toolsets()
-            self._initialized = True
-        
-        return list(self._toolsets.values())
+        logger.info(f"Registered API tool: {name} -> {config.proxy_prefix}")
     
-    def get_toolset(self, api_name: str) -> Optional[BaseToolset]:
-        """Get a specific toolset by API name.
+    def register_fastmcp_tool(
+        self,
+        name: str,
+        server_url: str,
+        proxy_prefix: Optional[str] = None,
+        auth: Optional[Dict[str, Any]] = None,
+        tags: Optional[List[str]] = None,
+        enabled: bool = True
+    ):
+        """Register a FastMCP server as a tool.
         
         Args:
-            api_name: Name of the API configuration
-            
-        Returns:
-            BaseToolset instance or None if not found/enabled
+            name: Unique name for the tool
+            server_url: URL of the FastMCP server (e.g., http://localhost:9000)
+            proxy_prefix: Custom prefix (defaults to /tools/{name})
+            auth: Authentication configuration (passed through to FastMCP server)
+            tags: Tags for grouping tools  
+            enabled: Whether to enable this tool
         """
-        if not self._initialized:
-            self._create_toolsets()
-            self._initialized = True
+        if name in self._fastmcp_tools:
+            logger.warning(f"FastMCP tool '{name}' already registered, replacing")
         
-        return self._toolsets.get(api_name)
+        config = FastMCPToolConfig(
+            name=name,
+            server_url=server_url,
+            proxy_prefix=proxy_prefix or f"/tools/{name}",
+            auth=auth,
+            tags=tags or [],
+            enabled=enabled
+        )
+        
+        self._fastmcp_tools[name] = config
+        self._router = None  # Force router regeneration
+        
+        logger.info(f"Registered FastMCP tool: {name} -> {config.proxy_prefix}")
     
-    def list_available_apis(self) -> Dict[str, Dict[str, Any]]:
-        """List all configured APIs and their status.
+    def register_custom_tool(
+        self,
+        name: str,
+        handler: Callable,
+        methods: List[str] = None,
+        proxy_prefix: Optional[str] = None,
+        tags: Optional[List[str]] = None,
+        enabled: bool = True
+    ):
+        """Register a custom tool with user-defined handler.
         
-        Returns:
-            Dictionary mapping API name to configuration info
+        Args:
+            name: Unique name for the tool
+            handler: Async function to handle requests
+            methods: HTTP methods to support (defaults to ["GET", "POST"])
+            proxy_prefix: Custom prefix (defaults to /tools/{name})
+            tags: Tags for grouping tools
+            enabled: Whether to enable this tool
         """
-        result = {}
+        if name in self._custom_tools:
+            logger.warning(f"Custom tool '{name}' already registered, replacing")
         
-        for api_name, api_config in self.config.apis.items():
-            result[api_name] = {
-                "enabled": api_config.enabled,
-                "spec_source": api_config.spec_source,
-                "integration_method": api_config.integration_method,
-                "tool_prefix": api_config.tool_prefix,
-                "has_auth": bool(api_config.auth_scheme),
-                "operations_filter": api_config.operation_filter
-            }
+        config = CustomToolConfig(
+            name=name,
+            handler=handler,
+            methods=methods or ["GET", "POST"],
+            proxy_prefix=proxy_prefix or f"/tools/{name}",
+            tags=tags or [],
+            enabled=enabled
+        )
         
-        return result
+        self._custom_tools[name] = config
+        self._router = None  # Force router regeneration
+        
+        logger.info(f"Registered custom tool: {name} -> {config.proxy_prefix}")
     
-    def _create_toolsets(self):
-        """Create toolsets for all enabled API configurations."""
-        print("Initializing OpenAPI toolsets...")
+    def get_tools_router(self) -> APIRouter:
+        """Generate FastAPI router with all registered tool endpoints."""
+        if self._router is None:
+            self._router = self._create_router()
+        return self._router
+    
+    def _create_router(self) -> APIRouter:
+        """Create the FastAPI router with all tool endpoints."""
+        router = APIRouter(prefix="/tools", tags=["Tools"])
         
-        for api_name, api_config in self.config.apis.items():
-            if not api_config.enabled:
+        # Add individual OpenAPI spec endpoints
+        self._add_openapi_spec_routes(router)
+        
+        # Add API tool routes
+        for name, config in self._api_tools.items():
+            if not config.enabled:
                 continue
-                
-            try:
-                toolset = self._create_single_toolset(api_name, api_config)
-                if toolset:
-                    self._toolsets[api_name] = toolset
-                    print(f"✓ Created toolset for {api_name} ({api_config.integration_method})")
-                else:
-                    print(f"✗ Failed to create toolset for {api_name}")
-                    
-            except Exception as e:
-                print(f"✗ Error creating toolset for {api_name}: {e}")
+            self._add_api_tool_routes(router, config)
         
-        print(f"Initialized {len(self._toolsets)} toolsets")
+        # Add FastMCP tool routes  
+        for name, config in self._fastmcp_tools.items():
+            if not config.enabled:
+                continue
+            self._add_fastmcp_tool_routes(router, config)
+        
+        # Add custom tool routes
+        for name, config in self._custom_tools.items():
+            if not config.enabled:
+                continue
+            self._add_custom_tool_routes(router, config)
+        
+        return router
     
-    def _create_single_toolset(self, api_name: str, api_config) -> Optional[BaseToolset]:
-        """Create a single toolset based on integration method."""
+    def _add_openapi_spec_routes(self, router: APIRouter):
+        """Add individual OpenAPI spec endpoints for each tool."""
         
-        if api_config.integration_method == "direct":
-            return self.openapi_factory.create_toolset(api_name, api_config)
-        elif api_config.integration_method == "fastmcp":
-            return self.fastmcp_factory.create_toolset(api_name, api_config)
+        @router.get("/{tool_name}/openapi.json", 
+                   summary="Get OpenAPI spec for individual tool",
+                   description="Returns the OpenAPI specification for a specific registered tool")
+        async def get_tool_openapi_spec(tool_name: str):
+            """Get OpenAPI specification for a specific tool."""
+            try:
+                # Generate individual spec for the requested tool
+                individual_spec = await self._generate_individual_openapi_spec(tool_name)
+                if individual_spec is None:
+                    raise HTTPException(status_code=404, detail=f"Tool '{tool_name}' not found or not enabled")
+                return individual_spec
+            except Exception as e:
+                logger.error(f"Error generating OpenAPI spec for tool '{tool_name}': {e}")
+                raise HTTPException(status_code=500, detail="Error generating OpenAPI specification")
+    
+    async def _generate_individual_openapi_spec(self, tool_name: str) -> Optional[Dict[str, Any]]:
+        """Generate OpenAPI specification for a single tool."""
+        
+        # Check if tool exists and is enabled
+        tool_config = None
+        tool_type = None
+        
+        if tool_name in self._api_tools and self._api_tools[tool_name].enabled:
+            tool_config = self._api_tools[tool_name]
+            tool_type = "api"
+        elif tool_name in self._fastmcp_tools and self._fastmcp_tools[tool_name].enabled:
+            tool_config = self._fastmcp_tools[tool_name]
+            tool_type = "fastmcp"
+        elif tool_name in self._custom_tools and self._custom_tools[tool_name].enabled:
+            tool_config = self._custom_tools[tool_name]
+            tool_type = "custom"
         else:
-            print(f"Unknown integration method: {api_config.integration_method}")
             return None
+        
+        # Generate spec based on tool type
+        if tool_type == "api":
+            return await self._generate_api_tool_spec(tool_config)
+        elif tool_type == "fastmcp":
+            return await self._generate_fastmcp_tool_spec(tool_config)
+        elif tool_type == "custom":
+            return self._generate_custom_tool_spec(tool_config)
+        
+        return None
     
-    def reload_config(self, config_file: Optional[Path] = None):
-        """Reload configuration and recreate toolsets.
-        
-        Args:
-            config_file: Path to configuration file (default: current config path)
-        """
-        # Close existing toolsets
-        self.cleanup()
-        
-        # Reload config
-        config_path = config_file or (self.tools_dir / "tools_config.yaml")
-        self.config = ToolsConfig.load_from_file(config_path)
-        
-        # Reset state
-        self._toolsets.clear()
-        self._initialized = False
-    
-    def add_api(
-        self, 
-        api_name: str, 
-        spec_source: str,
-        integration_method: str = "direct",
-        **kwargs
-    ) -> bool:
-        """Programmatically add a new API configuration.
-        
-        Args:
-            api_name: Name for the API
-            spec_source: URL or file path to OpenAPI spec
-            integration_method: 'direct' or 'fastmcp'
-            **kwargs: Additional configuration options
-            
-        Returns:
-            True if API was added successfully
-        """
-        from .config import OpenAPIToolConfig
-        
-        try:
-            # Create config
-            api_config = OpenAPIToolConfig(
-                spec_source=spec_source,
-                integration_method=integration_method,
-                **kwargs
-            )
-            
-            # Add to configuration
-            self.config.apis[api_name] = api_config
-            
-            # Create toolset if enabled
-            if api_config.enabled:
-                toolset = self._create_single_toolset(api_name, api_config)
-                if toolset:
-                    self._toolsets[api_name] = toolset
-                    print(f"✓ Added and created toolset for {api_name}")
-                    return True
-                else:
-                    print(f"✗ Failed to create toolset for {api_name}")
-                    return False
-            
-            print(f"✓ Added configuration for {api_name} (disabled)")
-            return True
-            
-        except Exception as e:
-            print(f"✗ Error adding API {api_name}: {e}")
-            return False
-    
-    def enable_api(self, api_name: str) -> bool:
-        """Enable a configured API.
-        
-        Args:
-            api_name: Name of the API to enable
-            
-        Returns:
-            True if API was enabled successfully
-        """
-        if api_name not in self.config.apis:
-            print(f"API {api_name} not found in configuration")
-            return False
-        
-        api_config = self.config.apis[api_name]
-        if api_config.enabled:
-            print(f"API {api_name} is already enabled")
-            return True
-        
-        try:
-            # Enable in config
-            api_config.enabled = True
-            
-            # Create toolset
-            toolset = self._create_single_toolset(api_name, api_config)
-            if toolset:
-                self._toolsets[api_name] = toolset
-                print(f"✓ Enabled {api_name}")
-                return True
-            else:
-                # Revert on failure
-                api_config.enabled = False
-                print(f"✗ Failed to enable {api_name}")
-                return False
-                
-        except Exception as e:
-            api_config.enabled = False
-            print(f"✗ Error enabling {api_name}: {e}")
-            return False
-    
-    def disable_api(self, api_name: str) -> bool:
-        """Disable an API.
-        
-        Args:
-            api_name: Name of the API to disable
-            
-        Returns:
-            True if API was disabled successfully
-        """
-        if api_name not in self.config.apis:
-            print(f"API {api_name} not found in configuration")
-            return False
-        
-        try:
-            # Disable in config
-            self.config.apis[api_name].enabled = False
-            
-            # Remove and cleanup toolset
-            if api_name in self._toolsets:
-                toolset = self._toolsets.pop(api_name)
-                if hasattr(toolset, 'close'):
-                    # For async toolsets, this should be awaited in practice
-                    pass
-                
-            print(f"✓ Disabled {api_name}")
-            return True
-            
-        except Exception as e:
-            print(f"✗ Error disabling {api_name}: {e}")
-            return False
-    
-    def cleanup(self):
-        """Clean up all toolsets and resources."""
-        for api_name, toolset in self._toolsets.items():
+    async def _generate_api_tool_spec(self, config: APIToolConfig) -> Dict[str, Any]:
+        """Generate OpenAPI spec for an API tool using FastAPI utilities."""
+        if config.spec_url:
+            # If we have a spec URL, try to fetch the original spec
             try:
-                if hasattr(toolset, 'close'):
-                    # For async toolsets, this should be awaited in practice
-                    # In a full implementation, you'd want async cleanup
-                    pass
+                async with httpx.AsyncClient() as client:
+                    response = await client.get(config.spec_url, timeout=10.0)
+                    if response.status_code == 200:
+                        original_spec = response.json()
+                        # Filter operations if specified
+                        if config.operations:
+                            original_spec = self._filter_openapi_operations(original_spec, config.operations)
+                        return original_spec
             except Exception as e:
-                print(f"Error cleaning up {api_name}: {e}")
+                logger.warning(f"Could not fetch original spec from {config.spec_url}: {e}")
         
-        # Clean up FastMCP servers
-        if hasattr(self.fastmcp_factory, 'cleanup_servers'):
-            self.fastmcp_factory.cleanup_servers()
+        # Fallback: create a temporary FastAPI app with proxy routes and generate spec
+        temp_app = FastAPI(
+            title=f"{config.name} API Tool",
+            version="1.0.0",
+            description=f"Proxied API tool for {config.name}"
+        )
         
-        self._toolsets.clear()
-
-
-# Convenience function for simple usage
-def get_toolsets(
-    config_file: Optional[Path] = None,
-    tools_dir: Optional[Path] = None
-) -> List[BaseToolset]:
-    """Convenience function to get all configured toolsets.
+        # Create a temporary router for this tool
+        temp_router = APIRouter(tags=config.tags or [config.name])
+        
+        # Add proxy routes (these won't actually be called, just for OpenAPI generation)
+        @temp_router.get("/{path:path}", 
+                        summary=f"Proxy GET requests to {config.name}",
+                        description="Proxy GET requests to the external API")
+        def proxy_get(path: str):
+            """Proxy GET requests to the external API."""
+            pass
+            
+        @temp_router.post("/{path:path}",
+                         summary=f"Proxy POST requests to {config.name}", 
+                         description="Proxy POST requests to the external API")
+        def proxy_post(path: str, body: Dict[str, Any] = None):
+            """Proxy POST requests to the external API."""
+            pass
+        
+        temp_app.include_router(temp_router)
+        
+        # Generate OpenAPI spec using FastAPI's utility
+        spec = get_openapi(
+            title=f"{config.name} API Tool",
+            version="1.0.0",
+            description=f"Proxied API tool for {config.name}",
+            routes=temp_app.routes
+        )
+        
+        # Add server info if available
+        if config.base_url:
+            spec["servers"] = [{"url": config.base_url}]
+            
+        return spec
     
-    Args:
-        config_file: Path to configuration file
-        tools_dir: Base tools directory
+    async def _generate_fastmcp_tool_spec(self, config: FastMCPToolConfig) -> Dict[str, Any]:
+        """Generate OpenAPI spec for a FastMCP tool."""
+        # Try to get the spec from the FastMCP server
+        try:
+            handler = self._proxy_handlers.get(config.name)
+            if isinstance(handler, FastMCPProxyHandler):
+                spec = await handler.get_server_openapi_spec()
+                if spec:
+                    return spec
+        except Exception as e:
+            logger.warning(f"Could not fetch FastMCP spec for {config.name}: {e}")
         
-    Returns:
-        List of BaseToolset instances
-    """
-    registry = ToolRegistry(tools_dir=tools_dir, config_file=config_file)
-    return registry.get_all_toolsets()
+        # Fallback: generate a basic spec
+        return {
+            "openapi": "3.0.2",
+            "info": {
+                "title": f"{config.name} FastMCP Tool",
+                "version": "1.0.0",
+                "description": f"FastMCP server tool for {config.name}"
+            },
+            "servers": [{"url": config.server_url}],
+            "paths": {
+                "/{path}": {
+                    "get": {
+                        "summary": f"FastMCP GET requests to {config.name}",
+                        "parameters": [
+                            {
+                                "name": "path",
+                                "in": "path",
+                                "required": True,
+                                "schema": {"type": "string"},
+                                "description": "FastMCP endpoint path"
+                            }
+                        ],
+                        "responses": {
+                            "200": {"description": "Successful response"},
+                            "404": {"description": "Not found"},
+                            "500": {"description": "Server error"}
+                        },
+                        "tags": config.tags or ["FastMCP", config.name]
+                    },
+                    "post": {
+                        "summary": f"FastMCP POST requests to {config.name}",
+                        "parameters": [
+                            {
+                                "name": "path",
+                                "in": "path",
+                                "required": True,
+                                "schema": {"type": "string"},
+                                "description": "FastMCP endpoint path"
+                            }
+                        ],
+                        "requestBody": {
+                            "content": {
+                                "application/json": {"schema": {"type": "object"}}
+                            }
+                        },
+                        "responses": {
+                            "200": {"description": "Successful response"},
+                            "400": {"description": "Bad request"},
+                            "500": {"description": "Server error"}
+                        },
+                        "tags": config.tags or ["FastMCP", config.name]
+                    }
+                }
+            }
+        }
+    
+    def _generate_custom_tool_spec(self, config: CustomToolConfig) -> Dict[str, Any]:
+        """Generate OpenAPI spec for a custom tool using FastAPI utilities."""
+        # Create a temporary FastAPI app
+        temp_app = FastAPI(
+            title=f"{config.name} Custom Tool",
+            version="1.0.0", 
+            description=f"Custom tool implementation for {config.name}"
+        )
+        
+        # Create a temporary router
+        temp_router = APIRouter(tags=config.tags or ["Custom", config.name])
+        
+        # Add routes for each supported method
+        for method in config.methods:
+            if method.upper() == "GET":
+                @temp_router.get("/{path:path}",
+                               summary=f"{config.name} custom tool - GET",
+                               description=f"Custom tool GET endpoint for {config.name}")
+                def custom_get(path: str):
+                    """Custom tool GET endpoint."""
+                    pass
+                    
+            elif method.upper() == "POST":
+                @temp_router.post("/{path:path}",
+                                summary=f"{config.name} custom tool - POST", 
+                                description=f"Custom tool POST endpoint for {config.name}")
+                def custom_post(path: str, body: Dict[str, Any] = None):
+                    """Custom tool POST endpoint."""
+                    pass
+                    
+            elif method.upper() == "PUT":
+                @temp_router.put("/{path:path}",
+                               summary=f"{config.name} custom tool - PUT",
+                               description=f"Custom tool PUT endpoint for {config.name}")
+                def custom_put(path: str, body: Dict[str, Any] = None):
+                    """Custom tool PUT endpoint."""
+                    pass
+                    
+            elif method.upper() == "DELETE":
+                @temp_router.delete("/{path:path}",
+                                  summary=f"{config.name} custom tool - DELETE",
+                                  description=f"Custom tool DELETE endpoint for {config.name}")
+                def custom_delete(path: str):
+                    """Custom tool DELETE endpoint."""
+                    pass
+        
+        temp_app.include_router(temp_router)
+        
+        # Generate OpenAPI spec using FastAPI's utility
+        return get_openapi(
+            title=f"{config.name} Custom Tool",
+            version="1.0.0",
+            description=f"Custom tool implementation for {config.name}",
+            routes=temp_app.routes
+        )
+    
+    def _filter_openapi_operations(self, spec: Dict[str, Any], operations: List[str]) -> Dict[str, Any]:
+        """Filter OpenAPI spec to include only specified operations."""
+        if "paths" not in spec:
+            return spec
+        
+        filtered_spec = spec.copy()
+        filtered_paths = {}
+        
+        for path, methods in spec["paths"].items():
+            filtered_methods = {}
+            for method, operation in methods.items():
+                # Check if this operation should be included
+                operation_id = operation.get("operationId", "")
+                if any(op in operation_id or op in path for op in operations):
+                    filtered_methods[method] = operation
+            
+            if filtered_methods:
+                filtered_paths[path] = filtered_methods
+        
+        filtered_spec["paths"] = filtered_paths
+        return filtered_spec
+    
+    def _add_api_tool_routes(self, router: APIRouter, config: APIToolConfig):
+        """Add routes for an API tool."""
+        # Create proxy handler
+        if config.name not in self._proxy_handlers:
+            self._proxy_handlers[config.name] = APIProxyHandler(config)
+        
+        handler = self._proxy_handlers[config.name]
+        
+        # Add catch-all route for the API
+        @router.api_route(
+            f"/{config.name}/{{path:path}}",
+            methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
+            tags=config.tags or [config.name.title()],
+            summary=f"{config.name.title()} API Proxy",
+            description=f"Proxy endpoint for {config.name} API operations"
+        )
+        async def api_proxy(path: str, request: Request):
+            return await handler.proxy_request(path, request)
+        
+        # Store reference to avoid garbage collection
+        setattr(api_proxy, f"_handler_{config.name}", handler)
+    
+    def _add_fastmcp_tool_routes(self, router: APIRouter, config: FastMCPToolConfig):
+        """Add routes for a FastMCP tool.""" 
+        # Create proxy handler
+        if config.name not in self._proxy_handlers:
+            self._proxy_handlers[config.name] = FastMCPProxyHandler(config)
+        
+        handler = self._proxy_handlers[config.name]
+        
+        # Add catch-all route for FastMCP server
+        @router.api_route(
+            f"/{config.name}/{{path:path}}",
+            methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
+            tags=config.tags or [config.name.title()],
+            summary=f"{config.name.title()} FastMCP Proxy",
+            description=f"Proxy endpoint for {config.name} FastMCP server"
+        )
+        async def fastmcp_proxy(path: str, request: Request):
+            return await handler.proxy_request(path, request)
+        
+        # Store reference to avoid garbage collection
+        setattr(fastmcp_proxy, f"_handler_{config.name}", handler)
+    
+    def _add_custom_tool_routes(self, router: APIRouter, config: CustomToolConfig):
+        """Add routes for a custom tool."""
+        @router.api_route(
+            f"/{config.name}/{{path:path}}",
+            methods=config.methods,
+            tags=config.tags or [config.name.title()],
+            summary=f"{config.name.title()} Custom Tool",
+            description=f"Custom tool endpoint: {config.name}"
+        )
+        async def custom_tool(path: str, request: Request):
+            return await config.handler(path, request)
+    
+    def list_registered_tools(self) -> Dict[str, Dict[str, Any]]:
+        """List all registered tools and their configuration."""
+        return {
+            "api_tools": {name: {
+                "name": config.name,
+                "base_url": config.base_url,
+                "proxy_prefix": config.proxy_prefix,
+                "enabled": config.enabled,
+                "operations": config.operations
+            } for name, config in self._api_tools.items()},
+            "fastmcp_tools": {name: {
+                "name": config.name,
+                "server_url": config.server_url,
+                "proxy_prefix": config.proxy_prefix,
+                "enabled": config.enabled
+            } for name, config in self._fastmcp_tools.items()},
+            "custom_tools": {name: {
+                "name": config.name,
+                "methods": config.methods,
+                "proxy_prefix": config.proxy_prefix,
+                "enabled": config.enabled
+            } for name, config in self._custom_tools.items()}
+        }
+    
+    def clear_tools(self):
+        """Clear all registered tools."""
+        self._api_tools.clear()
+        self._fastmcp_tools.clear()
+        self._custom_tools.clear()
+        self._proxy_handlers.clear()
+        self._router = None
+        logger.info("Cleared all registered tools")
+
+
+# Global registry instance
+_registry = ToolRegistry()
+
+# Public API functions
+def register_api_tool(*args, **kwargs):
+    """Register an external API as a tool."""
+    return _registry.register_api_tool(*args, **kwargs)
+
+def register_fastmcp_tool(*args, **kwargs):
+    """Register a FastMCP server as a tool.""" 
+    return _registry.register_fastmcp_tool(*args, **kwargs)
+
+def register_custom_tool(*args, **kwargs):
+    """Register a custom tool with user-defined handler."""
+    return _registry.register_custom_tool(*args, **kwargs)
+
+def get_tools_router() -> APIRouter:
+    """Get the FastAPI router with all tool endpoints."""
+    return _registry.get_tools_router()
+
+def list_registered_tools():
+    """List all registered tools."""
+    return _registry.list_registered_tools()
+
+def clear_tools():
+    """Clear all registered tools."""
+    return _registry.clear_tools()
