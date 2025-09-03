@@ -15,6 +15,7 @@ import uvicorn
 from pathlib import Path
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.routing import APIRoute
 from loguru import logger
 
 # Import ADK components
@@ -76,20 +77,48 @@ adk_web_server = AdkWebServer(
     agents_dir=str(AGENT_DIR),
 )
 
+# Custom function to generate cleaner operation IDs
+def custom_generate_unique_id(route: APIRoute) -> str:
+    """Generate cleaner operation IDs for better client function names."""
+    if route.tags:
+        # Use first tag + function name for cleaner names
+        tag = route.tags[0].lower().replace(" ", "_")
+        function_name = route.name
+        return f"{tag}_{function_name}"
+    else:
+        # Fallback to just function name if no tags
+        return route.name
+
 # Create the FastAPI app
 app: FastAPI = adk_web_server.get_fast_api_app(
     allow_origins=settings.allowed_origins,
 )
 
-# Add auth service to app state for dependency injection
+# Add services to app state for dependency injection
 app.state.auth_service = auth_service
+app.state.artifact_service = artifact_service
 
 # Include auth router
 app.include_router(auth_router)
 
+# Include artifacts router  
+from routes.artifacts import router as artifacts_router
+app.include_router(artifacts_router)
+
 # Include tools router
 tools_router = get_tools_router()
 app.include_router(tools_router)
+
+# Apply custom operation IDs to all routes for cleaner client function names
+def update_operation_ids():
+    """Update operation IDs for all routes to generate cleaner client function names."""
+    for route in app.routes:
+        if isinstance(route, APIRoute):
+            # Generate a cleaner operation ID
+            route.operation_id = custom_generate_unique_id(route)
+            
+# Apply the operation ID updates
+update_operation_ids()
 
 # Log registered tools
 registered_tools = list_registered_tools()
@@ -134,6 +163,7 @@ async def get_info():
             "Multi-Model Support"
         ]
     }
+
 
 if __name__ == "__main__":
     # Use settings for configuration
