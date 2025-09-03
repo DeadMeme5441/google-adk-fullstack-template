@@ -12,6 +12,7 @@ This template provides a complete foundation for building sophisticated AI agent
 - **Local Models** (Ollama, vLLM support)
 
 ### 🛠 **Production-Ready Services**
+- **OpenAPI Tools Framework** - Automatic REST API integration from OpenAPI specs
 - **MongoDB Sessions** - Persistent conversation storage
 - **S3 Artifacts** - File storage with versioning
 - **FastAPI Backend** - Modern async Python API with comprehensive OpenAPI schema
@@ -94,6 +95,15 @@ agent-template/
 ├── backend/                        # Python ADK Backend
 │   ├── agents/
 │   │   └── main_agent.py           # 🤖 Your AI agent definition
+│   ├── tools/                      # 🔧 OpenAPI Tools Framework
+│   │   ├── __init__.py             # Framework exports
+│   │   ├── registry.py             # Central toolset registry
+│   │   ├── config.py               # Configuration models
+│   │   ├── spec_loader.py          # URL/file spec loading
+│   │   ├── tools_config.yaml       # ⚙️ API configuration
+│   │   ├── openapi_specs/          # Local OpenAPI specifications
+│   │   ├── cache/                  # Cached downloaded specs
+│   │   └── README.md               # Framework documentation
 │   ├── config.py                   # ⚙️ Settings management
 │   ├── main.py                     # 🚀 FastAPI application
 │   ├── Dockerfile                  # 🐳 Production container
@@ -195,9 +205,44 @@ AWS_SECRET_ACCESS_KEY=your_secret
 
 ## 🛠 Advanced Configuration
 
-### Custom Tools Integration
+### OpenAPI Tools Integration
 
-Add your own tools to `backend/agents/main_agent.py`:
+**Automatic REST API Integration** - Add any OpenAPI-compatible API:
+
+```yaml
+# backend/tools/tools_config.yaml
+apis:
+  github:
+    spec_source: "https://raw.githubusercontent.com/github/rest-api-description/main/descriptions/api.github.com/api.github.com.json"
+    integration_method: direct
+    auth_scheme: "bearer_token"
+    auth_credential: "GITHUB_TOKEN"
+    operation_filter: ["repos/list-for-authenticated-user", "repos/get"]
+    tool_prefix: "github_"
+    enabled: true
+
+  weather:
+    spec_source: "https://api.openweathermap.org/data/2.5/openapi.json"
+    integration_method: fastmcp
+    auth_scheme: "api_key"
+    auth_credential: "OPENWEATHER_API_KEY"
+    enabled: true
+```
+
+**Two Integration Methods:**
+- `direct` - Google ADK OpenAPIToolset (recommended)
+- `fastmcp` - FastMCP → MCP Protocol → MCPToolset (advanced)
+
+**Features:**
+- URL-based or local OpenAPI specs
+- Smart caching with TTL
+- Authentication support (API key, bearer token, basic auth)
+- Operation filtering and tool prefixing
+- Server URL override for different environments
+
+### Custom Function Tools
+
+Add custom Python functions:
 
 ```python
 from google.adk.tools import Tool
@@ -210,7 +255,7 @@ def my_custom_tool(query: str) -> str:
 
 root_agent = Agent(
     # ...
-    tools=[google_search, my_custom_tool]
+    tools=get_agent_tools()  # Includes OpenAPI tools + custom tools
 )
 ```
 
@@ -301,6 +346,7 @@ This template uses **TanStack Start in SPA (Single Page Application) mode**:
 
 ### Backend: FastAPI + Google ADK
 
+- **OpenAPI Tools Framework** - Automatic REST API integration with smart caching
 - **Google Agent Development Kit** - Sophisticated AI agent processing
 - **MongoDB Sessions** - Persistent conversation storage via adk-extra-services
 - **S3 Artifacts** - File storage and versioning via adk-extra-services

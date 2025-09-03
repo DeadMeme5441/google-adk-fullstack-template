@@ -1,0 +1,247 @@
+openapi: 3.0.3
+info:
+  title: Weather API
+  description: A simple weather information API
+  version: 1.0.0
+servers:
+  - url: http://api.openweathermap.org/data/2.5
+    description: OpenWeatherMap API
+paths:
+  /weather:
+    get:
+      summary: Get current weather
+      description: Get current weather data for a specific location
+      operationId: getCurrentWeather
+      parameters:
+        - name: q
+          in: query
+          description: City name, state code (only for US) and country code divided by comma
+          required: true
+          schema:
+            type: string
+            example: "London,UK"
+        - name: appid
+          in: query
+          description: API key
+          required: true
+          schema:
+            type: string
+        - name: units
+          in: query
+          description: Units of measurement
+          required: false
+          schema:
+            type: string
+            enum: [standard, metric, imperial]
+            default: metric
+      responses:
+        '200':
+          description: Weather data retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeatherResponse'
+        '401':
+          description: Invalid API key
+        '404':
+          description: City not found
+  /forecast:
+    get:
+      summary: Get weather forecast
+      description: Get 5 day weather forecast for a specific location
+      operationId: getWeatherForecast
+      parameters:
+        - name: q
+          in: query
+          description: City name, state code (only for US) and country code divided by comma
+          required: true
+          schema:
+            type: string
+            example: "London,UK"
+        - name: appid
+          in: query
+          description: API key
+          required: true
+          schema:
+            type: string
+        - name: units
+          in: query
+          description: Units of measurement
+          required: false
+          schema:
+            type: string
+            enum: [standard, metric, imperial]
+            default: metric
+        - name: cnt
+          in: query
+          description: Number of timestamps to return
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 40
+            default: 40
+      responses:
+        '200':
+          description: Forecast data retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForecastResponse'
+        '401':
+          description: Invalid API key
+        '404':
+          description: City not found
+
+components:
+  schemas:
+    WeatherResponse:
+      type: object
+      properties:
+        coord:
+          $ref: '#/components/schemas/Coordinates'
+        weather:
+          type: array
+          items:
+            $ref: '#/components/schemas/Weather'
+        base:
+          type: string
+        main:
+          $ref: '#/components/schemas/Main'
+        visibility:
+          type: integer
+        wind:
+          $ref: '#/components/schemas/Wind'
+        clouds:
+          $ref: '#/components/schemas/Clouds'
+        dt:
+          type: integer
+        sys:
+          $ref: '#/components/schemas/Sys'
+        timezone:
+          type: integer
+        id:
+          type: integer
+        name:
+          type: string
+        cod:
+          type: integer
+    ForecastResponse:
+      type: object
+      properties:
+        cod:
+          type: string
+        message:
+          type: integer
+        cnt:
+          type: integer
+        list:
+          type: array
+          items:
+            $ref: '#/components/schemas/ForecastItem'
+        city:
+          $ref: '#/components/schemas/City'
+    ForecastItem:
+      type: object
+      properties:
+        dt:
+          type: integer
+        main:
+          $ref: '#/components/schemas/Main'
+        weather:
+          type: array
+          items:
+            $ref: '#/components/schemas/Weather'
+        clouds:
+          $ref: '#/components/schemas/Clouds'
+        wind:
+          $ref: '#/components/schemas/Wind'
+        visibility:
+          type: integer
+        pop:
+          type: number
+        dt_txt:
+          type: string
+    Coordinates:
+      type: object
+      properties:
+        lon:
+          type: number
+        lat:
+          type: number
+    Weather:
+      type: object
+      properties:
+        id:
+          type: integer
+        main:
+          type: string
+        description:
+          type: string
+        icon:
+          type: string
+    Main:
+      type: object
+      properties:
+        temp:
+          type: number
+        feels_like:
+          type: number
+        temp_min:
+          type: number
+        temp_max:
+          type: number
+        pressure:
+          type: integer
+        humidity:
+          type: integer
+        sea_level:
+          type: integer
+        grnd_level:
+          type: integer
+    Wind:
+      type: object
+      properties:
+        speed:
+          type: number
+        deg:
+          type: integer
+        gust:
+          type: number
+    Clouds:
+      type: object
+      properties:
+        all:
+          type: integer
+    Sys:
+      type: object
+      properties:
+        type:
+          type: integer
+        id:
+          type: integer
+        country:
+          type: string
+        sunrise:
+          type: integer
+        sunset:
+          type: integer
+    City:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        coord:
+          $ref: '#/components/schemas/Coordinates'
+        country:
+          type: string
+        population:
+          type: integer
+        timezone:
+          type: integer
+        sunrise:
+          type: integer
+        sunset:
+          type: integer

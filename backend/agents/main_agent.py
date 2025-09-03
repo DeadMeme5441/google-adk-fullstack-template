@@ -8,6 +8,9 @@ from loguru import logger
 # Import configuration system
 from config import settings
 
+# Import OpenAPI Tools Template Framework
+from tools import ToolRegistry
+
 # Optional: Import LiteLLM for non-Google models
 try:
     from google.adk.models.lite_llm import LiteLlm
@@ -48,6 +51,33 @@ def create_model():
         # Use Gemini models (default)
         return settings.agent_model
 
+
+def get_agent_tools():
+    """Get all available tools for the agent"""
+    
+    # Start with built-in tools
+    tools = [google_search]
+    
+    # Add OpenAPI-based tools from configuration
+    try:
+        registry = ToolRegistry()
+        openapi_toolsets = registry.get_all_toolsets()
+        tools.extend(openapi_toolsets)
+        
+        # Log which APIs are enabled
+        available_apis = registry.list_available_apis()
+        enabled_apis = [name for name, info in available_apis.items() if info["enabled"]]
+        
+        if enabled_apis:
+            logger.info(f"Loaded OpenAPI tools for: {', '.join(enabled_apis)}")
+        else:
+            logger.info("No OpenAPI tools enabled. Edit backend/tools/tools_config.yaml to add APIs.")
+            
+    except Exception as e:
+        logger.warning(f"Error loading OpenAPI tools: {e}")
+    
+    return tools
+
 # Define the root agent - customize this for your specific use case
 root_agent = Agent(
     name=settings.agent_name,
@@ -60,17 +90,22 @@ root_agent = Agent(
        - Analyze and synthesize complex data
        - Provide fact-based insights and recommendations
     
-    2. **Problem Solving**:
+    2. **API Integration & Data Access**:
+       - Access external APIs and services through OpenAPI specifications
+       - Retrieve and manipulate data from configured APIs
+       - Perform CRUD operations on external systems when available
+    
+    3. **Problem Solving**:
        - Break down complex problems into manageable parts
        - Apply logical reasoning and critical thinking
        - Offer creative solutions and alternatives
     
-    3. **Communication**:
+    4. **Communication**:
        - Explain complex concepts clearly
        - Adapt communication style to user needs
        - Provide structured, well-organized responses
     
-    4. **Research & Learning**:
+    5. **Research & Learning**:
        - Stay updated with current information through web search
        - Cross-reference multiple sources for accuracy
        - Provide citations and sources when relevant
@@ -78,29 +113,36 @@ root_agent = Agent(
     **Instructions for responses**:
     - Be helpful, accurate, and professional
     - Use web search when you need current or specific information
+    - Use available API tools when relevant to the user's request
     - Provide clear, actionable insights
     - Structure your responses logically
     - Ask clarifying questions when needed
     
-    **Customization Note**: 
-    This is a generic agent template. Customize the name, description, instructions, 
-    tools, and context for your specific use case by modifying this file or using 
-    environment variables.""",
+    **Available Tools**: 
+    You have access to web search and any OpenAPI-based tools configured in the system.
+    Check the available tools and use them appropriately to assist users.
+    
+    **Template Framework**: 
+    This agent uses an OpenAPI Tools Template Framework. Administrators can add new APIs
+    by editing backend/tools/tools_config.yaml or using the ToolRegistry programmatically.""",
     
     # Tools available to the agent - customize as needed
-    tools=[google_search],
+    tools=get_agent_tools(),
     
     # Agent context - customize for your domain
     context={
-        "agent_type": "Generic Assistant",
+        "agent_type": "OpenAPI-Enabled Assistant",
         "capabilities": [
-            "Web Search", 
+            "Web Search",
+            "OpenAPI Integration", 
+            "External API Access",
             "Information Analysis", 
             "Problem Solving", 
             "Research Assistance"
         ],
         "template_version": "1.0.0",
-        "customization_guide": "Edit this file to customize for your specific use case"
+        "framework": "OpenAPI Tools Template Framework",
+        "customization_guide": "Edit backend/tools/tools_config.yaml to add APIs, or modify this file for other customizations"
     }
 )
 
