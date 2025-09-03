@@ -3,14 +3,16 @@ import { Button } from './ui/button'
 import { Textarea } from './ui/textarea'
 import { Send, Loader2 } from 'lucide-react'
 import { cn } from '../lib/utils'
+import { ChatFileUploadButton } from './FileUploadButton'
 
 interface ChatInputProps {
   onSendMessage: (message: string) => void
+  sessionId?: string
   disabled?: boolean
   placeholder?: string
 }
 
-export function ChatInput({ onSendMessage, disabled = false, placeholder = "Type your message..." }: ChatInputProps) {
+export function ChatInput({ onSendMessage, sessionId, disabled = false, placeholder = "Type your message..." }: ChatInputProps) {
   const [message, setMessage] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -47,6 +49,13 @@ export function ChatInput({ onSendMessage, disabled = false, placeholder = "Type
   return (
     <div className="p-4 backdrop-blur-sm bg-white/50 border-t">
       <form onSubmit={handleSubmit} className="flex items-end space-x-3 max-w-4xl mx-auto">
+        {/* Upload button - only show when we have a sessionId */}
+        {sessionId && (
+          <ChatFileUploadButton 
+            sessionId={sessionId}
+            className="mb-1" 
+          />
+        )}
         <div className="flex-1 relative">
           <Textarea
             ref={textareaRef}
@@ -68,6 +77,7 @@ export function ChatInput({ onSendMessage, disabled = false, placeholder = "Type
             rows={1}
           />
         </div>
+        
         <Button
           type="submit"
           disabled={!message.trim() || disabled}

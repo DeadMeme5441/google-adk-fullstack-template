@@ -5,13 +5,16 @@ import { ChatMessage } from './ChatMessage'
 import { ChatInput } from './ChatInput'
 import { ScrollArea } from './ui/scroll-area'
 import { Separator } from './ui/separator'
-import { Sparkles, Bot } from 'lucide-react'
+import { Sparkles, Bot, Files } from 'lucide-react'
+import { Button } from './ui/button'
 
 interface ChatInterfaceProps {
   sessionId: string
+  onToggleFileSidebar?: () => void
+  isFileSidebarOpen?: boolean
 }
 
-export function ChatInterface({ sessionId }: ChatInterfaceProps) {
+export function ChatInterface({ sessionId, onToggleFileSidebar, isFileSidebarOpen }: ChatInterfaceProps) {
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const queryClient = useQueryClient()
@@ -101,16 +104,30 @@ export function ChatInterface({ sessionId }: ChatInterfaceProps) {
     <div className="flex-1 flex flex-col h-full bg-gradient-to-b from-white to-slate-50/30">
       {/* Chat Header */}
       <div className="px-6 py-4 bg-white/80 backdrop-blur-sm border-b border-slate-200/60">
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-600 rounded-full flex items-center justify-center">
-            <Bot className="w-4 h-4 text-white" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-600 rounded-full flex items-center justify-center">
+              <Bot className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-foreground">
+                AI Assistant
+              </h2>
+              <p className="text-xs text-muted-foreground">Always here to help</p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-lg font-semibold text-foreground">
-              AI Assistant
-            </h2>
-            <p className="text-xs text-muted-foreground">Always here to help</p>
-          </div>
+          
+          {/* File Sidebar Toggle */}
+          {onToggleFileSidebar && (
+            <Button
+              onClick={onToggleFileSidebar}
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0 hover:bg-purple-100"
+            >
+              <Files className={`h-4 w-4 transition-colors ${isFileSidebarOpen ? 'text-purple-600' : 'text-gray-400'}`} />
+            </Button>
+          )}
         </div>
       </div>
 
@@ -160,6 +177,7 @@ export function ChatInterface({ sessionId }: ChatInterfaceProps) {
       <div className="bg-white/80 backdrop-blur-sm">
         <ChatInput 
           onSendMessage={handleSendMessage}
+          sessionId={sessionId}
           disabled={isLoading}
           placeholder="Message AI assistant..."
         />

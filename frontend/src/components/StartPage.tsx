@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
-import { useCreateSessionAppsAppNameUsersUserIdSessionsPost } from '../api/generated'
+import { createSession } from '../client'
 import { Button } from './ui/button'
 import { Card, CardContent } from './ui/card'
 import { Textarea } from './ui/textarea'
-import { Sparkles, MessageCircle, Lightbulb, Code, BookOpen, Zap } from 'lucide-react'
+import { HeroFileUploadButton } from './FileUploadButton'
+import { Sparkles, MessageCircle, Lightbulb, Code, BookOpen, Zap, Upload } from 'lucide-react'
 
 const examplePrompts = [
   {
@@ -44,7 +45,7 @@ export function StartPage() {
   const [isCreating, setIsCreating] = useState(false)
   const navigate = useNavigate()
   
-  const createSessionMutation = useCreateSessionAppsAppNameUsersUserIdSessionsPost()
+  // Removed createSessionMutation - using direct API call
 
   const handleStartChat = async (promptText?: string) => {
     const textToSend = promptText || message.trim()
@@ -52,14 +53,18 @@ export function StartPage() {
     
     setIsCreating(true)
     try {
-      const session = await createSessionMutation.mutateAsync({
-        appName: 'nbfc-analyst',
-        userId: 'default-user',
-        data: {
-          appName: 'nbfc-analyst',
-          userId: 'default-user',
+      const response = await createSession({
+        path: {
+          app_name: 'default',
+          user_id: 'default-user',
+        },
+        body: {
+          app_name: 'default',
+          user_id: 'default-user',
         }
       })
+      
+      const session = response.data
       
       await navigate({ 
         to: '/chat/$sessionId', 
@@ -68,6 +73,34 @@ export function StartPage() {
       })
     } catch (error) {
       console.error('Failed to create session:', error)
+      setIsCreating(false)
+    }
+  }
+
+  // Handle file upload success - create session and navigate
+  const handleFileUploadSuccess = async (filename: string) => {
+    setIsCreating(true)
+    try {
+      const response = await createSession({
+        path: {
+          app_name: 'default',
+          user_id: 'default-user',
+        },
+        body: {
+          app_name: 'default',
+          user_id: 'default-user',
+        }
+      })
+      
+      const session = response.data
+      
+      await navigate({ 
+        to: '/chat/$sessionId', 
+        params: { sessionId: session.id },
+        state: { initialMessage: `I've uploaded a file: ${filename}. Please analyze it.` }
+      })
+    } catch (error) {
+      console.error('Failed to create session after upload:', error)
       setIsCreating(false)
     }
   }
@@ -112,12 +145,20 @@ export function StartPage() {
                     disabled={isCreating}
                   />
                 </div>
-                <div className="flex justify-end">
+                <div className="flex flex-col sm:flex-row gap-3 justify-end items-center">
+                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                    <span>or</span>
+                  </div>
+                  <HeroFileUploadButton 
+                    sessionId="temp-session-for-upload"
+                    onUploadSuccess={handleFileUploadSuccess}
+                    className="order-first sm:order-none"
+                  />
                   <Button 
                     onClick={() => handleStartChat()}
                     disabled={!message.trim() || isCreating}
                     size="lg"
-                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-8 shadow-lg"
+                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-8 shadow-lg order-last"
                   >
                     {isCreating ? (
                       <>

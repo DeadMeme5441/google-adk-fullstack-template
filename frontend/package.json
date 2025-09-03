@@ -8,8 +8,8 @@
     "preview": "vite preview --port 3000",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "generate": "orval",
-    "generate:watch": "orval --watch"
+    "generate": "bunx @hey-api/openapi-ts",
+    "generate:watch": "@hey-api/openapi-ts --watch"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.10",
@@ -35,6 +35,7 @@
     "vite-tsconfig-paths": "^5.1.4"
   },
   "devDependencies": {
+    "@hey-api/openapi-ts": "^0.82.3",
     "@shadcn/ui": "^0.0.4",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/react": "^16.2.0",
