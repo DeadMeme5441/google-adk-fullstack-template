@@ -34,7 +34,7 @@ class SQLAuthBackend(AuthBackend):
             # Non-fatal; SQLAlchemy may still handle
             pass
         async with self.engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
+            await conn.run_sync(Base.metadata.create_all, checkfirst=True)
         logger.info("Auth SQL tables ensured (migrated)")
 
     async def get_by_email_or_username(self, identifier: str) -> Optional[User]:

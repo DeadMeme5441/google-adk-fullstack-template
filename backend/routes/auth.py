@@ -116,7 +116,7 @@ async def get_current_user_info(
     
     Requires valid JWT token in Authorization header.
     """
-    return await current_user
+    return current_user
 
 
 @router.post("/logout")
