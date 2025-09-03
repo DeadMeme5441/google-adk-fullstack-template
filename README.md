@@ -1,177 +1,222 @@
-# 🤖 Agent Template Repository
+# 🚀 Google ADK Fullstack Template
 
-> **A production-ready full-stack template for building AI agents with modern React UI and Python backend**
+> **Production-ready template for building AI agents with React frontend, Python backend, and Google Agent Development Kit integration**
 
-This template provides a complete foundation for building sophisticated AI agent applications using Google's Agent Development Kit (ADK) with a modern chat interface, persistent sessions, and deployment-ready architecture.
+A comprehensive fullstack template for building sophisticated AI agents with modern web interfaces. Features the **OpenAPI Tools Template Framework** for seamless REST API integration, multi-model AI support, persistent sessions, and deployment-ready architecture.
 
-## ✨ Features
+## ✨ Key Features
 
-### 🧠 **Multiple Model Providers**
-- **Google Gemini** (AI Studio & Vertex AI)
-- **LiteLLM Integration** (OpenAI, Anthropic, Cohere, local models)
-- **Local Models** (Ollama, vLLM support)
+### 🧠 **AI Agent Capabilities**
+- **Google Agent Development Kit (ADK)** - Latest Python SDK for building production AI agents
+- **Multi-Model Support** - Google Gemini, OpenAI, Anthropic, Cohere, local models via LiteLLM
+- **OpenAPI Tools Framework** - Automatic integration of any REST API into your agent
+- **Persistent Sessions** - MongoDB-backed conversation storage
+- **Artifact Management** - S3-compatible file storage with versioning
 
-### 🛠 **Production-Ready Services**
-- **OpenAPI Tools Framework** - Automatic REST API integration from OpenAPI specs
-- **MongoDB Sessions** - Persistent conversation storage
-- **S3 Artifacts** - File storage with versioning
-- **FastAPI Backend** - Modern async Python API with comprehensive OpenAPI schema
-- **TanStack Start Frontend** - Modern React + TypeScript SPA with shadcn/ui components
-- **Modern Chat Interface** - Professional chat UI with animations, gradients, and responsive design
+### 🎨 **Modern Frontend**
+- **TanStack Start SPA** - High-performance React single-page application
+- **shadcn/ui Components** - Beautiful, accessible React components
+- **Real-time Chat Interface** - Professional chat UI with streaming support
+- **Type-Safe API Integration** - Auto-generated TypeScript clients from OpenAPI schemas
+- **Responsive Design** - Mobile-first, professional interface
 
-### 🚀 **Deployment Ready**
-- **Docker Compose** - Complete development environment
-- **Production Config** - Nginx, scaling, monitoring
-- **uv Integration** - Lightning-fast Python package management
-- **Hot Reload** - Development productivity features
-
-### 🔧 **Developer Experience**
-- **Complete Type Safety** - OpenAPI → TypeScript types + Pydantic validation  
-- **TanStack Query Integration** - Smart caching, optimistic updates, streaming support
-- **Orval Code Generation** - Auto-generated API client from OpenAPI schema
-- **shadcn/ui Components** - Modern, accessible React components with Tailwind CSS
-- **Professional Chat UI** - Claude.ai-style interface with animations and gradients
-- **Real-time Communication** - WebSocket, SSE streaming, standard HTTP
-- **Configuration** - Environment-based settings
-- **Documentation** - Comprehensive setup guides
+### 🛠 **Developer Experience**
+- **Hot Reload Development** - Fast iteration with Docker Compose
+- **Complete Type Safety** - End-to-end TypeScript integration
+- **Auto-Generated API Clients** - Orval generates TypeScript from OpenAPI specs  
+- **Comprehensive Documentation** - Detailed setup and usage guides
+- **Production Ready** - Docker deployment with monitoring and scaling
 
 ## 🚀 Quick Start
+
+### Prerequisites
+- Docker & Docker Compose (recommended)
+- Or: Python 3.12+, uv, Bun 1.0+, MongoDB, MinIO/S3
 
 ### Option 1: Docker Compose (Recommended)
 
 ```bash
-# Clone and setup
-git clone <your-repo>
-cd agent-template
+# Clone repository
+git clone <your-repo-url>
+cd google-adk-fullstack-template
 
-# Configure environment
+# Setup environment
 cp .env.example .env
-# Edit .env with your API keys
+# Edit .env with your API keys (GOOGLE_API_KEY, etc.)
 
-# Start everything
+# Start all services
 docker-compose up --build
 
-# Access services
-# Frontend Chat UI: http://localhost:3000
+# Access applications
+# Frontend: http://localhost:3000
 # Backend API: http://localhost:8000
-# MinIO Console: http://localhost:9001
+# API Documentation: http://localhost:8000/docs
 ```
 
 ### Option 2: Local Development
 
-**Prerequisites:**
-- Python 3.12+
-- uv ([install guide](https://docs.astral.sh/uv/getting-started/installation/))
-- Bun 1.0+ (for TanStack Start frontend)
-- MongoDB & MinIO (or use Docker services)
-
-**Backend Setup:**
+**Backend:**
 ```bash
 cd backend
 cp .env.example .env
 # Edit .env with your configuration
-uv sync
-uv run python main.py
+uv sync                    # Install dependencies
+uv run python main.py      # Start server (port 8000)
 ```
 
-**Frontend Setup (Modern Chat Interface):**
+**Frontend:**
 ```bash
 cd frontend
-bun install
-bun run dev          # Development server (http://localhost:3000)
-bun run generate     # Generate API client from OpenAPI schema
-bun run build        # Build for production
-bun run preview      # Preview production build
+bun install               # Install dependencies
+bun run generate         # Generate API client from OpenAPI
+bun run dev             # Start development server (port 3000)
 ```
 
-## 📁 Project Structure
+## 📁 Project Architecture
 
 ```
-agent-template/
-├── 🐳 docker-compose.yaml          # Development environment
-├── 🐳 .env.example                 # Environment configuration
-├── 📖 CLAUDE.md                    # Claude Code integration
-│
-├── backend/                        # Python ADK Backend
-│   ├── agents/
-│   │   └── main_agent.py           # 🤖 Your AI agent definition
-│   ├── tools/                      # 🔧 OpenAPI Tools Framework
-│   │   ├── __init__.py             # Framework exports
-│   │   ├── registry.py             # Central toolset registry
-│   │   ├── config.py               # Configuration models
-│   │   ├── spec_loader.py          # URL/file spec loading
-│   │   ├── tools_config.yaml       # ⚙️ API configuration
-│   │   ├── openapi_specs/          # Local OpenAPI specifications
-│   │   ├── cache/                  # Cached downloaded specs
-│   │   └── README.md               # Framework documentation
-│   ├── config.py                   # ⚙️ Settings management
-│   ├── main.py                     # 🚀 FastAPI application
-│   ├── Dockerfile                  # 🐳 Production container
-│   ├── .env.example                # Backend configuration
-│   └── pyproject.toml              # uv dependencies
-│
-├── frontend/                       # Modern Chat Interface
+google-adk-fullstack-template/
+├── 📱 frontend/                    # TanStack Start React SPA
 │   ├── src/
 │   │   ├── routes/                # File-based routing
-│   │   │   ├── index.tsx          # 🏠 Start page with chat input
-│   │   │   ├── chat.tsx           # 💬 Chat layout page
-│   │   │   └── chat.$sessionId.tsx # 🗨️ Individual chat sessions
-│   │   ├── components/            # Modern React components
-│   │   │   ├── ui/                # 🎨 shadcn/ui components
-│   │   │   ├── StartPage.tsx      # 🚀 Landing page with prompts
-│   │   │   ├── ChatInterface.tsx  # 💬 Main chat interface
-│   │   │   ├── ChatSidebar.tsx    # 📋 Session management sidebar
-│   │   │   ├── ChatMessage.tsx    # 💭 Message bubbles
-│   │   │   └── ChatInput.tsx      # ✍️ Message input with animations
-│   │   ├── api/
-│   │   │   ├── generated.ts       # 🔷 Auto-generated API client (Orval)
-│   │   │   └── mutator.ts         # 🌐 Axios HTTP client config
-│   │   ├── lib/
-│   │   │   └── utils.ts           # 🛠️ Utility functions
-│   │   └── styles.css             # 🎨 Tailwind + animations
-│   ├── components.json             # shadcn/ui configuration
-│   ├── orval.config.ts             # API generation configuration  
+│   │   ├── components/            # React components + shadcn/ui
+│   │   ├── api/                   # Auto-generated API client
+│   │   └── lib/                   # Utilities and configuration
 │   ├── package.json               # Bun dependencies
-│   └── vite.config.ts             # Vite + TanStack Start config
+│   └── README.md                  # Frontend documentation
 │
-└── deployment/                     # 🚢 Production deployment
-    ├── docker-compose.prod.yaml    # Production containers
-    ├── nginx.conf                  # Load balancer config
-    ├── deploy.sh                   # Deployment script
-    └── .env.prod.example           # Production environment
+├── 🐍 backend/                     # Python FastAPI + Google ADK
+│   ├── agents/
+│   │   └── main_agent.py          # Your AI agent definition
+│   ├── tools/                     # 🔧 OpenAPI Tools Framework
+│   │   ├── __init__.py            # Tool registration API
+│   │   ├── registry.py            # Central tool registry
+│   │   ├── api_proxy.py           # External API proxy handler
+│   │   ├── fastmcp_proxy.py       # FastMCP server integration
+│   │   ├── examples.py            # Example tool configurations
+│   │   └── integrations.py       # Your custom tool integrations
+│   ├── config/                    # Settings and service configuration
+│   ├── routes/                    # FastAPI route handlers
+│   ├── middleware/                # Authentication and CORS
+│   ├── services/                  # Business logic services
+│   ├── models/                    # Data models and schemas
+│   ├── main.py                    # FastAPI application entry point
+│   ├── pyproject.toml             # uv dependencies
+│   └── README.md                  # Backend documentation
+│
+├── 🚢 deployment/                  # Production deployment
+│   ├── docker-compose.prod.yaml   # Production containers
+│   ├── nginx.conf                 # Load balancer configuration
+│   ├── deploy.sh                  # Deployment automation script
+│   └── README.md                  # Deployment documentation
+│
+├── 🐳 docker-compose.yaml          # Development environment
+├── .env.example                    # Environment configuration template
+├── CLAUDE.md                       # Claude Code integration guide
+└── README.md                       # This file
 ```
 
-## 🎯 Customization Guide
+## 🛠 Core Components
 
-### 1. **Configure Your Agent**
+### Google ADK Integration
+The template is built around Google's Agent Development Kit, providing:
+- **Agent Definition** - Configure your AI agent in `backend/agents/main_agent.py`
+- **Tool Integration** - Seamless integration of external APIs and custom tools
+- **Session Management** - Persistent conversation state with MongoDB
+- **Artifact Handling** - File storage and retrieval with S3-compatible backends
 
-Edit `backend/agents/main_agent.py`:
+### OpenAPI Tools Framework
+**Automatically integrate any REST API into your agent:**
 
 ```python
-# Basic configuration via environment variables
-AGENT_NAME=my_assistant
-AGENT_MODEL=gemini-2.0-flash-exp
-AGENT_DESCRIPTION=My custom AI assistant
+# backend/tools/integrations.py
+from tools import register_api_tool
 
-# Or edit the agent directly
-root_agent = Agent(
-    name="my_custom_agent",
-    model="gemini-2.0-flash-exp",  # or LiteLlm(model="openai/gpt-4o")
-    instruction="Your custom instructions here...",
-    tools=[google_search, your_custom_tools],
-    context={
-        "expertise": "Your Domain",
-        "capabilities": ["Custom", "Features"]
-    }
+# Add GitHub API to your agent
+register_api_tool(
+    name="github",
+    base_url="https://api.github.com",
+    auth={"type": "bearer", "token_env": "GITHUB_TOKEN"},
+    operations=["repos/list-for-authenticated-user", "repos/get"],
+    tags=["GitHub"],
+    enabled=True
+)
+
+# Add weather API
+register_api_tool(
+    name="weather", 
+    base_url="https://api.openweathermap.org/data/2.5",
+    auth={"type": "api_key", "key_env": "OPENWEATHER_API_KEY", "location": "query", "key_name": "appid"},
+    tags=["Weather"],
+    enabled=True
 )
 ```
 
-### 2. **Choose Your Model Provider**
+**Features:**
+- **Automatic Discovery** - Agent automatically gets access to all registered tools
+- **Authentication Support** - Bearer tokens, API keys, basic auth
+- **FastMCP Integration** - Connect FastMCP servers as tools
+- **Custom Tools** - Register custom Python functions as tools
+- **Individual OpenAPI Specs** - Each tool exposes its own OpenAPI specification
+
+### Frontend Integration
+The React frontend provides:
+- **Type-Safe API Calls** - Auto-generated hooks from OpenAPI schemas
+- **Real-Time Chat** - WebSocket and SSE streaming support
+- **Session Management** - Persistent conversation history
+- **Modern UI** - Professional chat interface with animations
+
+```typescript
+// Auto-generated API hooks
+import { useRunAgent, useSessions, useCreateSession } from '@/api/hooks';
+
+// Chat with your agent
+const { mutate: runAgent } = useRunAgent();
+runAgent({
+  appName: 'my-agent',
+  message: { parts: [{ text: 'Hello!' }] }
+});
+
+// Manage sessions
+const { data: sessions } = useSessions({ appName: 'my-agent' });
+```
+
+## 🔧 Configuration
+
+### Environment Variables
+Key configuration in `.env`:
+
+```bash
+# Agent Configuration
+AGENT_NAME=my_assistant
+AGENT_MODEL=gemini-2.0-flash-exp
+AGENT_DESCRIPTION="My AI Assistant"
+
+# Model Provider
+MODEL_PROVIDER=gemini              # or litellm
+GOOGLE_API_KEY=your_api_key
+
+# Services  
+SESSION_SERVICE_TYPE=inmemory      # or mongo
+ARTIFACT_SERVICE_TYPE=inmemory     # or s3
+
+# Database (if using MongoDB)
+MONGO_URL=mongodb://localhost:27017
+MONGO_DB_NAME=agent_sessions
+
+# Storage (if using S3)
+S3_BUCKET_NAME=agent-artifacts
+AWS_ACCESS_KEY_ID=your_key
+AWS_SECRET_ACCESS_KEY=your_secret
+```
+
+### Model Providers
 
 **Google Gemini (Default):**
 ```bash
 MODEL_PROVIDER=gemini
 GOOGLE_API_KEY=your_google_api_key
+AGENT_MODEL=gemini-2.0-flash-exp
 ```
 
 **OpenAI via LiteLLM:**
@@ -181,271 +226,77 @@ AGENT_MODEL=openai/gpt-4o
 OPENAI_API_KEY=your_openai_key
 ```
 
-**Local Ollama:**
+**Local Models (Ollama):**
 ```bash
 MODEL_PROVIDER=litellm
 AGENT_MODEL=ollama_chat/llama3.1
 OLLAMA_API_BASE=http://localhost:11434
 ```
 
-### 3. **Configure Services**
+## 🚀 Development Workflow
 
-**MongoDB (Sessions):**
+### 1. Define Your Agent
+Edit `backend/agents/main_agent.py` to customize your agent's behavior, model, and tools.
+
+### 2. Add Tools
+Register APIs and custom tools in `backend/tools/integrations.py` using the OpenAPI Tools Framework.
+
+### 3. Customize Frontend
+Modify the React components in `frontend/src/components/` to match your application's needs.
+
+### 4. Test Integration
+- Backend API: http://localhost:8000/docs
+- Frontend: http://localhost:3000
+- Tool endpoints: http://localhost:8000/tools/{tool_name}/
+
+### 5. Deploy
+Use `deployment/deploy.sh` for production deployment with Docker Compose.
+
+## 🔗 Service Integration
+
+### MongoDB Sessions
+Enable persistent conversation storage:
 ```bash
+# Start with MongoDB
+docker-compose --profile session-mongo up --build
+
+# Configuration
+SESSION_SERVICE_TYPE=mongo
 MONGO_URL=mongodb://localhost:27017
-MONGO_DB_NAME=my_app_sessions
+MONGO_DB_NAME=agent_sessions
 ```
 
-**S3 (Artifacts):**
+### S3 Artifact Storage
+Enable file storage and retrieval:
 ```bash
-S3_BUCKET_NAME=my-app-artifacts
-AWS_ACCESS_KEY_ID=your_key
-AWS_SECRET_ACCESS_KEY=your_secret
+# Start with MinIO (S3-compatible)
+docker-compose --profile artifacts-minio up --build
+
+# Configuration  
+ARTIFACT_SERVICE_TYPE=s3
+S3_BUCKET_NAME=agent-artifacts
+S3_ENDPOINT_URL=http://localhost:9000  # For MinIO
 ```
 
-## 🛠 Advanced Configuration
-
-### OpenAPI Tools Integration
-
-**Automatic REST API Integration** - Add any OpenAPI-compatible API:
-
-```yaml
-# backend/tools/tools_config.yaml
-apis:
-  github:
-    spec_source: "https://raw.githubusercontent.com/github/rest-api-description/main/descriptions/api.github.com/api.github.com.json"
-    integration_method: direct
-    auth_scheme: "bearer_token"
-    auth_credential: "GITHUB_TOKEN"
-    operation_filter: ["repos/list-for-authenticated-user", "repos/get"]
-    tool_prefix: "github_"
-    enabled: true
-
-  weather:
-    spec_source: "https://api.openweathermap.org/data/2.5/openapi.json"
-    integration_method: fastmcp
-    auth_scheme: "api_key"
-    auth_credential: "OPENWEATHER_API_KEY"
-    enabled: true
-```
-
-**Two Integration Methods:**
-- `direct` - Google ADK OpenAPIToolset (recommended)
-- `fastmcp` - FastMCP → MCP Protocol → MCPToolset (advanced)
-
-**Features:**
-- URL-based or local OpenAPI specs
-- Smart caching with TTL
-- Authentication support (API key, bearer token, basic auth)
-- Operation filtering and tool prefixing
-- Server URL override for different environments
-
-### Custom Function Tools
-
-Add custom Python functions:
-
-```python
-from google.adk.tools import Tool
-
-@Tool
-def my_custom_tool(query: str) -> str:
-    """Your custom tool description"""
-    # Implementation
-    return "Result"
-
-root_agent = Agent(
-    # ...
-    tools=get_agent_tools()  # Includes OpenAPI tools + custom tools
-)
-```
-
-### Database Integration
-
-Add database models in `backend/models/`:
-
-```python
-from sqlalchemy import Column, String, DateTime
-from sqlalchemy.ext.declarative import declarative_base
-
-Base = declarative_base()
-
-class MyModel(Base):
-    __tablename__ = "my_table"
-    id = Column(String, primary_key=True)
-    # ... your fields
-```
-
-### Frontend API Integration
-
-**Complete Type-Safe API Integration:**
-
-```typescript
-// 1. Generated TypeScript types from OpenAPI schema
-import type { Session, Event, ChatParams } from '@/types/api';
-
-// 2. Use TanStack Query hooks for API calls
-import { useRunAgent, useRunAgentStream, useSessions } from '@/hooks/api-hooks';
-
-// 3. Chat with agents (standard)
-const { mutate: runAgent } = useRunAgent();
-runAgent({
-  appName: 'my-agent',
-  userId: 'user123',
-  sessionId: 'session456',
-  message: { parts: [{ text: 'Hello!' }] }
-});
-
-// 4. Chat with agents (streaming)
-const { startStream } = useRunAgentStream();
-const stream = startStream(chatParams);
-for await (const event of stream) {
-  console.log('New event:', event);
-}
-
-// 5. Session management
-const { data: sessions } = useSessions({ appName: 'my-agent', userId: 'user123' });
-const { mutate: createSession } = useCreateSession();
-
-// 6. Real-time WebSocket connection
-import { adkApiClient } from '@/lib/api-client';
-const ws = adkApiClient.createLiveConnection({
-  appName: 'my-agent',
-  userId: 'user123', 
-  sessionId: 'session456'
-});
-```
-
-**Available API Hooks (30+ hooks):**
-- **Sessions**: `useSessions()`, `useCreateSession()`, `useDeleteSession()`
-- **Agent Execution**: `useRunAgent()`, `useRunAgentStream()`
-- **Artifacts**: `useArtifacts()`, `useArtifact()`, `useDeleteArtifact()`
-- **Evaluations**: `useEvalSets()`, `useRunEval()`, `useEvalResults()`
-- **Debug/Tracing**: `useTraceData()`, `useSessionTrace()`, `useEventGraph()`
-
-### API Endpoints
-
-Add custom endpoints in `backend/main.py`:
-
-```python
-@app.get("/api/custom")
-async def custom_endpoint():
-    return {"data": "custom response"}
-```
-
-## 🏗 Architecture
-
-### Frontend: TanStack Start SPA Mode
-
-This template uses **TanStack Start in SPA (Single Page Application) mode**:
-
-- **Client-side rendering** - No server-side rendering of routes
-- **Server functions** - Type-safe bridge between frontend and FastAPI backend  
-- **File-based routing** - Organized route structure in `src/routes/`
-- **Static deployment ready** - Build output can be served from CDN or static hosting
-- **Development server** - Full hot reload and dev tools during development
-
-### Backend: FastAPI + Google ADK
-
-- **OpenAPI Tools Framework** - Automatic REST API integration with smart caching
-- **Google Agent Development Kit** - Sophisticated AI agent processing
-- **MongoDB Sessions** - Persistent conversation storage via adk-extra-services
-- **S3 Artifacts** - File storage and versioning via adk-extra-services
-- **Multi-model support** - Gemini, LiteLLM (OpenAI, Anthropic, local models)
-- **Type-safe APIs** - Pydantic validation and OpenAPI documentation
-
-### Communication Flow
-
-```
-Frontend (TanStack Start SPA)
-    ↓ Server Functions (Type-safe)
-FastAPI Backend (Python)
-    ↓ Google ADK
-AI Models (Gemini/LiteLLM/Local)
-    ↓ Storage
-MongoDB (Sessions) + S3 (Artifacts)
-```
-
-## 🚢 Deployment
-
-### Development
+### Full Production Setup
 ```bash
-./deployment/deploy.sh dev
-```
-
-### Production
-```bash
-# Configure production environment
-cp deployment/.env.prod.example .env.prod
-# Edit .env.prod with production values
-
-# Deploy
-./deployment/deploy.sh prod
-```
-
-### Deployment Script Commands
-```bash
-./deployment/deploy.sh dev      # Start development
-./deployment/deploy.sh prod     # Start production
-./deployment/deploy.sh logs     # View logs
-./deployment/deploy.sh stop     # Stop services
-./deployment/deploy.sh clean    # Full cleanup
-```
-
-## 🔧 Development Tools
-
-### Hot Reload Development
-```bash
-# Enable hot reload in docker-compose.yaml
-volumes:
-  - ./backend:/app
-  - /app/.venv  # Keep venv separate
-```
-
-### Debugging
-```bash
-# Enable LiteLLM debug
-LITELLM_DEBUG=True
-
-# Backend logs
-docker-compose logs -f backend
-
-# Database inspection
-docker-compose --profile tools up  # Starts MongoDB Express
-```
-
-### Testing
-```bash
-# Backend tests
-cd backend && uv run pytest
-
-# Frontend tests  
-cd frontend && bun test
-
-# Integration tests
-curl http://localhost:8000/health
+# Start everything
+docker-compose --profile session-mongo --profile artifacts-minio up --build
 ```
 
 ## 📚 Documentation
 
-### Service Integration
-- **MongoDB Sessions**: See [adk-extra-services](https://github.com/edu010101/adk-extra-services)
-- **S3 Artifacts**: Compatible with AWS S3, MinIO, DigitalOcean Spaces
-- **LiteLLM**: Supports 100+ model providers
-- **Google ADK**: [Official documentation](https://github.com/google/adk-python)
+Each component has detailed documentation:
 
-### Model Providers
-- **Gemini Models**: AI Studio (development) or Vertex AI (production)
-- **OpenAI**: GPT-4, GPT-3.5-turbo via LiteLLM
-- **Anthropic**: Claude models via LiteLLM  
-- **Local Models**: Ollama, vLLM, or any OpenAI-compatible endpoint
-
-### Environment Variables
-See `.env.example` and `backend/.env.example` for complete configuration options.
+- **[Backend README](backend/README.md)** - Python FastAPI backend and OpenAPI Tools Framework
+- **[Frontend README](frontend/README.md)** - TanStack Start React frontend  
+- **[Deployment README](deployment/README.md)** - Docker deployment and production setup
+- **[Tools README](backend/tools/README.md)** - OpenAPI Tools Framework detailed guide
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
 3. Commit your changes (`git commit -m 'Add amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
@@ -456,21 +307,21 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgments
 
-- [Google ADK](https://github.com/google/adk-python) - Agent Development Kit
-- [adk-extra-services](https://github.com/edu010101/adk-extra-services) - MongoDB & S3 services
-- [LiteLLM](https://github.com/BerriAI/litellm) - Multi-model integration
-- [uv](https://github.com/astral-sh/uv) - Fast Python package management
+- **[Google ADK](https://github.com/google/adk-python)** - Agent Development Kit
+- **[adk-extra-services](https://github.com/edu010101/adk-extra-services)** - MongoDB & S3 services
+- **[LiteLLM](https://github.com/BerriAI/litellm)** - Multi-model integration
+- **[TanStack Start](https://tanstack.com/start)** - Modern React framework
+- **[shadcn/ui](https://ui.shadcn.com/)** - Beautiful React components
+- **[FastAPI](https://fastapi.tiangolo.com/)** - Modern Python web framework
+- **[uv](https://github.com/astral-sh/uv)** - Fast Python package management
 
 ---
 
-## 🚀 Get Started Now
+## 🎯 Next Steps
 
-```bash
-git clone <this-repo>
-cd google-adk-template
-cp .env.example .env
-# Add your API keys to .env
-docker-compose up --build
-```
+1. **Configure your agent** - Edit `backend/agents/main_agent.py`
+2. **Add your first tool** - Use the OpenAPI Tools Framework in `backend/tools/integrations.py`
+3. **Customize the UI** - Modify React components in `frontend/src/components/`
+4. **Deploy to production** - Use `deployment/deploy.sh prod`
 
-**Your AI agent will be running at `http://localhost:8000`** 🎉
+**Start building your AI agent today!** 🚀
