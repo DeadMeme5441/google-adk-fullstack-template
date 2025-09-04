@@ -83,14 +83,8 @@ export function ThemeProvider({
   defaultTheme?: Theme
   storageKey?: string
 } & React.ComponentProps<'div'>) {
-  // Initialize with the correct theme immediately
-  const [theme, setThemeState] = useState<Theme>(() => {
-    if (typeof window !== 'undefined') {
-      return initializeTheme()
-    }
-    return defaultTheme
-  })
-  
+  // Always start with default theme to prevent hydration mismatch
+  const [theme, setThemeState] = useState<Theme>(defaultTheme)
   const [isLoading, setIsLoading] = useState(true)
 
   // Initialize theme on mount and listen for system changes

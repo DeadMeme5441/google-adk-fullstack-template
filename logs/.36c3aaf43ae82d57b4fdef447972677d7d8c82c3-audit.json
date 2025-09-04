@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "/home/deadmeme/Projects/Personal/agents/google-adk-fullstack-template/logs/.36c3aaf43ae82d57b4fdef447972677d7d8c82c3-audit.json",
+    "files": [
+        {
+            "date": 1756926974161,
+            "name": "/home/deadmeme/Projects/Personal/agents/google-adk-fullstack-template/logs/mcp-puppeteer-2025-09-04.log",
+            "hash": "cd6b227011d920ba3ceb1ad1d79ae4b706c9ea19f4291804e6968736d7baca82"
+        }
+    ],
+    "hashType": "sha256"
+}
