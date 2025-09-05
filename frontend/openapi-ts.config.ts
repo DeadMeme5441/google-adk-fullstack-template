@@ -2,7 +2,11 @@ import { defineConfig } from '@hey-api/openapi-ts';
 
 export default defineConfig({
   input: 'http://localhost:8000/openapi.json',
-  output: 'src/client',
+  output: {
+    path: 'src/client',
+    format: 'prettier',
+    lint: 'eslint',
+  },
   plugins: [
     '@hey-api/typescript',
     '@hey-api/sdk',
@@ -11,6 +15,7 @@ export default defineConfig({
       queryOptions: true,
       queryKeys: true,
       mutationOptions: true,
+      infiniteQueryOptions: true,
     },
   ],
 });

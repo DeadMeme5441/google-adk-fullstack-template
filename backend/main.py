@@ -57,8 +57,6 @@ session_service, memory_service, artifact_service = ServiceFactory.create_all_se
 # Initialize auth service (SQLite)
 auth_service = AuthService(settings=settings)
 
-# Auth database will be initialized via startup event
-
 # Initialize other required services
 credential_service = InMemoryCredentialService()
 agent_loader = AgentLoader(str(AGENT_DIR))
@@ -136,17 +134,17 @@ else:
 
 logger.info(f"Services initialized:")
 
-# Ensure auth backend is initialized on startup
-@app.on_event("startup")
-async def _init_auth_db():
-    logger.info("Initializing auth backend via startup event...")
+# Initialize auth backend database tables
+async def init_auth_database():
+    """Initialize the auth database tables"""
+    logger.info("Initializing auth backend database...")
     try:
         await auth_service.init()
-        logger.info("Auth backend initialized successfully via startup event")
+        logger.info("Auth backend database initialized successfully")
+        return True
     except Exception as e:
-        logger.error(f"Failed to initialize auth backend via startup event: {e}")
-        # Don't re-raise to allow server to start, but log the error
-        logger.error("Server will continue without auth database - registration will fail")
+        logger.error(f"Failed to initialize auth backend database: {e}")
+        return False
 
 # Add custom endpoints if needed
 @app.get("/health")
@@ -175,6 +173,15 @@ async def get_info():
 
 
 if __name__ == "__main__":
+    import asyncio
+    
+    # Initialize auth database before starting server
+    async def startup():
+        await init_auth_database()
+    
+    # Run database initialization
+    asyncio.run(startup())
+    
     # Use settings for configuration
     logger.info(f"Starting Google ADK Template server: '{settings.agent_name}'")
     logger.info(f"Host: {settings.host}:{settings.port}")

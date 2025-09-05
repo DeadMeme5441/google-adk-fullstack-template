@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import DateTime, String, Boolean, Index
+from sqlalchemy import DateTime, String, Boolean
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -23,8 +23,5 @@ class UserORM(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
-    __table_args__ = (
-        Index("ix_users_email", "email"),
-        Index("ix_users_username", "username"),
-    )
+    # Indexes are already defined in column definitions above
 

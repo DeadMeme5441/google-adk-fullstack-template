@@ -1,7 +1,8 @@
 import { createFileRoute, Navigate } from '@tanstack/react-router'
 import { useAuth } from '@/hooks/use-auth'
+import { ChatInterface } from '@/components/chat/chat-interface'
 
-function HomePage() {
+function ChatPage() {
   const { isAuthenticated, isLoading } = useAuth()
   
   if (isLoading) {
@@ -12,10 +13,13 @@ function HomePage() {
     )
   }
   
-  // Redirect to appropriate page based on auth state
-  return <Navigate to={isAuthenticated ? "/chat" : "/login"} />
+  if (!isAuthenticated) {
+    return <Navigate to="/login" />
+  }
+  
+  return <ChatInterface />
 }
 
-export const Route = createFileRoute('/')({
-  component: HomePage,
+export const Route = createFileRoute('/chat')({
+  component: ChatPage,
 })
